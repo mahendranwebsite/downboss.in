@@ -18,7 +18,6 @@
     "tailwind-merge": "^2.5.2"
   },
   "devDependencies": {
-    "@types/jszip": "^3.4.1",
     "@types/node": "^20.16.10",
     "@types/react": "^18.3.10",
     "@types/react-dom": "^18.3.0",

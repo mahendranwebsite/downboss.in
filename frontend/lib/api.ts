@@ -75,7 +75,7 @@ export async function downloadMediaFile(
       if (res.body && totalBytes > 0) {
         clearInterval(progressTimer);
         const reader = res.body.getReader();
-        const chunks: Uint8Array[] = [];
+        const chunks: BlobPart[] = [];
         let receivedBytes = 0;
 
         while (true) {
