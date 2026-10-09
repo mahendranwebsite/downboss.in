@@ -236,8 +236,11 @@ async def extract_media_info(url: str) -> Dict[str, Any]:
         'noplaylist': True,
         'extract_flat': False,
         'skip_download': True,
-        'socket_timeout': 15,
-        'format': 'bestvideo*+bestaudio/best',
+        'socket_timeout': 30,
+        'format': 'all',
+        'ignore_no_formats_error': True,
+        'remote_components': ['ejs:github'],
+        'js_engine': 'deno',
         'http_headers': {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
             'Accept-Language': 'en-US,en;q=0.9',
@@ -249,7 +252,6 @@ async def extract_media_info(url: str) -> Dict[str, Any]:
         ydl_opts['extractor_args'] = {
             'youtube': {
                 'player_client': ['android', 'ios', 'mweb'],
-                'player_skip': ['web'],
             }
         }
 
@@ -261,16 +263,17 @@ async def extract_media_info(url: str) -> Dict[str, Any]:
     info = None
     ytdl_error = None
     try:
-        info = await asyncio.wait_for(loop.run_in_executor(None, _extract), timeout=18.0)
+        info = await asyncio.wait_for(loop.run_in_executor(None, _extract), timeout=45.0)
     except Exception as e:
         ytdl_error = e
 
     # 3. If yt-dlp failed (e.g. "No video could be found in this tweet" or image carousel post),
-    # immediately fallback to gallery-dl to extract images/carousel!
+    # immediately fallback to gallery-dl to extract images/carousel for non-youtube platforms!
     if not info or ytdl_error:
-        gallery_res = await loop.run_in_executor(None, extract_with_gallery_dl, url_clean)
-        if gallery_res:
-            return gallery_res
+        if platform != "youtube":
+            gallery_res = await loop.run_in_executor(None, extract_with_gallery_dl, url_clean)
+            if gallery_res:
+                return gallery_res
 
         # If gallery-dl also couldn't find media, check if this is an Instagram carousel/photo post
         err_msg = str(ytdl_error) if ytdl_error else "Could not extract media."

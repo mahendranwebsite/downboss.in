@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     // Try communicating with the Python FastAPI backend
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s for yt-dlp
+      const timeoutId = setTimeout(() => controller.abort(), 40000); // 40s for complex extractions
 
       const backendRes = await fetch(`${BACKEND_URL}/api/info`, {
         method: 'POST',

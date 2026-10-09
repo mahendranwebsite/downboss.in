@@ -180,6 +180,8 @@ async def stream_download(
             'no_warnings': True,
             'noplaylist': True,
             'socket_timeout': 30,
+            'remote_components': ['ejs:github'],
+            'js_engine': 'deno',
         }
         if has_cookies:
             ydl_opts['cookiefile'] = cookie_path
@@ -208,6 +210,8 @@ async def stream_download(
             'no_warnings': True,
             'noplaylist': True,
             'socket_timeout': 30,
+            'remote_components': ['ejs:github'],
+            'js_engine': 'deno',
         }
         if has_cookies:
             ydl_opts['cookiefile'] = cookie_path
