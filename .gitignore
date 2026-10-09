@@ -1,0 +1,47 @@
+# Node dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Next.js build output
+.next/
+out/
+build/
+dist/
+
+# Python virtual environment & cache
+backend/venv/
+venv/
+ENV/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+backend/__pycache__/
+backend/temp_downloads/
+temp_downloads/
+*.mp4
+*.webm
+*.mkv
+*.m4a
+*.mp3
+*.part
+*.ytdl
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# IDE files
+.vscode/
+.idea/
