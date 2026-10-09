@@ -214,6 +214,13 @@ async def extract_media_info(url: str) -> Dict[str, Any]:
     url_lower = url_clean.lower()
     platform = detect_platform(url_clean)
 
+    # Clean YouTube URLs from playlist / mix parameters (&list=, &index=)
+    if "youtube.com/watch" in url_clean and "v=" in url_clean:
+        vid_match = re.search(r'[?&]v=([a-zA-Z0-9_-]+)', url_clean)
+        if vid_match:
+            url_clean = f"https://www.youtube.com/watch?v={vid_match.group(1)}"
+            url_lower = url_clean.lower()
+
     # 1. Check if this is an explicit sample demonstration link from the UI
     for sample_link, sample_key in KNOWN_SAMPLE_URLS.items():
         if sample_link.lower() in url_lower:
@@ -225,13 +232,15 @@ async def extract_media_info(url: str) -> Dict[str, Any]:
     ydl_opts = {
         'quiet': True,
         'no_warnings': True,
+        'noplaylist': True,
         'extract_flat': False,
         'skip_download': True,
         'socket_timeout': 15,
         'format': 'bestvideo*+bestaudio/best',
         'extractor_args': {
             'youtube': {
-                'player_client': ['web', 'android', 'ios'],
+                'player_client': ['android', 'ios', 'mweb'],
+                'player_skip': ['web'],
             }
         },
         'http_headers': {

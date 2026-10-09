@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SAMPLE_MEDIA_MOCK } from '@/lib/mockData';
 
-const BACKEND_URL = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+const BACKEND_URL = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://api.downboss.in';
 
 const KNOWN_SAMPLE_URLS = [
   'https://x.com/tech_insider/status/1789123456789',

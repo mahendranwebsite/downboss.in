@@ -149,6 +149,20 @@ async def stream_download(
     download_id = str(uuid.uuid4())[:8]
     is_audio = quality.lower() == "mp3" or safe_filename.endswith(".mp3")
     
+    clean_url = url.strip()
+    if "youtube.com/watch" in clean_url and "v=" in clean_url:
+        import re
+        vid_match = re.search(r'[?&]v=([a-zA-Z0-9_-]+)', clean_url)
+        if vid_match:
+            clean_url = f"https://www.youtube.com/watch?v={vid_match.group(1)}"
+
+    common_extractor_args = {
+        'youtube': {
+            'player_client': ['android', 'ios', 'mweb'],
+            'player_skip': ['web'],
+        }
+    }
+
     if is_audio:
         out_template = os.path.join(TEMP_DIR, f"{download_id}_audio.%(ext)s")
         ydl_opts = {
@@ -161,7 +175,9 @@ async def stream_download(
             }],
             'quiet': True,
             'no_warnings': True,
+            'noplaylist': True,
             'socket_timeout': 30,
+            'extractor_args': common_extractor_args,
         }
     else:
         out_template = os.path.join(TEMP_DIR, f"{download_id}_video.%(ext)s")
@@ -184,12 +200,14 @@ async def stream_download(
             'merge_output_format': 'mp4',
             'quiet': True,
             'no_warnings': True,
+            'noplaylist': True,
             'socket_timeout': 30,
+            'extractor_args': common_extractor_args,
         }
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([url])
+            ydl.download([clean_url])
 
         # Find the produced file
         pattern = os.path.join(TEMP_DIR, f"{download_id}_*")
