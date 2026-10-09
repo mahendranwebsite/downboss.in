@@ -1,7 +1,7 @@
 import JSZip from 'jszip';
 import { MediaData, HistoryItem } from './types';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.downboss.in';
 
 export async function fetchMediaInfo(url: string): Promise<MediaData> {
   const cleanUrl = url.trim();
