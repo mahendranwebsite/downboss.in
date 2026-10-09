@@ -229,6 +229,7 @@ async def extract_media_info(url: str) -> Dict[str, Any]:
             return mock
 
     # 2. Try yt-dlp first for video/reel extraction
+    cookie_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies.txt")
     ydl_opts = {
         'quiet': True,
         'no_warnings': True,
@@ -237,17 +238,20 @@ async def extract_media_info(url: str) -> Dict[str, Any]:
         'skip_download': True,
         'socket_timeout': 15,
         'format': 'bestvideo*+bestaudio/best',
-        'extractor_args': {
-            'youtube': {
-                'player_client': ['android', 'ios', 'mweb'],
-                'player_skip': ['web'],
-            }
-        },
         'http_headers': {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
             'Accept-Language': 'en-US,en;q=0.9',
         }
     }
+    if os.path.exists(cookie_path):
+        ydl_opts['cookiefile'] = cookie_path
+    else:
+        ydl_opts['extractor_args'] = {
+            'youtube': {
+                'player_client': ['android', 'ios', 'mweb'],
+                'player_skip': ['web'],
+            }
+        }
 
     loop = asyncio.get_event_loop()
     def _extract():

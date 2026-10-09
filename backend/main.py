@@ -156,12 +156,15 @@ async def stream_download(
         if vid_match:
             clean_url = f"https://www.youtube.com/watch?v={vid_match.group(1)}"
 
+    cookie_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies.txt")
+    has_cookies = os.path.exists(cookie_path)
+
     common_extractor_args = {
         'youtube': {
             'player_client': ['android', 'ios', 'mweb'],
             'player_skip': ['web'],
         }
-    }
+    } if not has_cookies else {}
 
     if is_audio:
         out_template = os.path.join(TEMP_DIR, f"{download_id}_audio.%(ext)s")
@@ -177,8 +180,11 @@ async def stream_download(
             'no_warnings': True,
             'noplaylist': True,
             'socket_timeout': 30,
-            'extractor_args': common_extractor_args,
         }
+        if has_cookies:
+            ydl_opts['cookiefile'] = cookie_path
+        else:
+            ydl_opts['extractor_args'] = common_extractor_args
     else:
         out_template = os.path.join(TEMP_DIR, f"{download_id}_video.%(ext)s")
         max_height = 1080
@@ -202,8 +208,11 @@ async def stream_download(
             'no_warnings': True,
             'noplaylist': True,
             'socket_timeout': 30,
-            'extractor_args': common_extractor_args,
         }
+        if has_cookies:
+            ydl_opts['cookiefile'] = cookie_path
+        else:
+            ydl_opts['extractor_args'] = common_extractor_args
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:

@@ -29,12 +29,15 @@ temp_downloads/
 *.part
 *.ytdl
 
-# Environment variables
+# Environment variables & secrets
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+cookies.txt
+*.cookies.txt
+backend/cookies.txt
 
 # OS files
 .DS_Store
