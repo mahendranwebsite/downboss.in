@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export const maxDuration = 60; // Allow up to 60s for video streaming
+
 const BACKEND_URL = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://api.downboss.in';
 
 export async function GET(req: NextRequest) {

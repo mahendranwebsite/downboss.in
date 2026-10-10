@@ -47,30 +47,41 @@ export async function downloadMediaFile(
     }
   }, 400);
 
-  // 1. Fetch the file as a Blob and trigger a native download.
+  // 1. Fetch the file as a Blob or direct stream
   try {
     let res: Response | null = null;
-    const isDirectBackend =
-      targetDownloadUrl.startsWith('http://localhost:8000') ||
-      targetDownloadUrl.startsWith('http://127.0.0.1:8000');
 
-    if (isDirectBackend) {
+    // Try direct fetch from backend first (bypasses Vercel serverless proxy & timeouts)
+    try {
+      res = await fetch(targetDownloadUrl);
+    } catch (directErr) {
+      console.warn('Direct fetch error, attempting proxy fallback:', directErr);
+      res = null;
+    }
+
+    // If direct fetch didn't succeed, fallback to streaming proxy
+    if (!res || !res.ok) {
       try {
-        res = await fetch(targetDownloadUrl);
-      } catch {
+        const proxyUrl = `/api/proxy?url=${encodeURIComponent(targetDownloadUrl)}&filename=${encodeURIComponent(filename)}`;
+        res = await fetch(proxyUrl);
+      } catch (proxyErr) {
+        console.warn('Proxy fetch error:', proxyErr);
         res = null;
       }
     }
 
-    // If direct fetch didn't succeed or it's a cross-origin URL, use our streaming proxy
+    // If both fetch attempts failed, trigger native browser download directly
     if (!res || !res.ok) {
-      const proxyUrl = `/api/proxy?url=${encodeURIComponent(targetDownloadUrl)}&filename=${encodeURIComponent(filename)}`;
-      res = await fetch(proxyUrl);
-    }
-
-    if (!res || !res.ok) {
-      const errData = await res?.json().catch(() => ({})) || {};
-      throw new Error(errData.error || errData.detail || 'Download stream unreachable. Please try again.');
+      clearInterval(progressTimer);
+      if (onProgress) onProgress(100);
+      const link = document.createElement('a');
+      link.href = targetDownloadUrl;
+      link.download = filename;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => document.body.removeChild(link), 1000);
+      return;
     }
 
     const contentLength = res.headers.get('content-length');
@@ -108,8 +119,16 @@ export async function downloadMediaFile(
     return;
   } catch (err: any) {
     clearInterval(progressTimer);
-    console.error('Download error:', err);
-    throw new Error(err?.message || 'Download failed. Please try again.');
+    console.warn('Blob download fallback to direct anchor link:', err);
+    // Final fail-safe: trigger browser download directly via anchor link
+    if (onProgress) onProgress(100);
+    const link = document.createElement('a');
+    link.href = targetDownloadUrl;
+    link.download = filename;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => document.body.removeChild(link), 1000);
   }
 }
 
