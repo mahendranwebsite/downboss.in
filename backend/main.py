@@ -235,9 +235,13 @@ async def stream_download(
     has_deno = shutil.which("deno") is not None
     has_node = shutil.which("node") is not None
 
+    pot_server = os.environ.get("YTDLP_POT_SERVER", "http://127.0.0.1:4416")
     common_extractor_args = {
         'youtube': {
-            'player_client': ['android', 'ios', 'web'],
+            'player_client': ['web', 'mweb', 'android', 'ios'],
+        },
+        'youtubepot-bgutilhttp': {
+            'base_url': [pot_server],
         }
     }
 

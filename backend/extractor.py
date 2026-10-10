@@ -251,9 +251,13 @@ async def extract_media_info(url: str) -> Dict[str, Any]:
         ydl_opts['js_engine'] = 'deno'
     elif has_node:
         ydl_opts['js_engine'] = 'node'
+    pot_server = os.environ.get("YTDLP_POT_SERVER", "http://127.0.0.1:4416")
     ydl_opts['extractor_args'] = {
         'youtube': {
-            'player_client': ['android', 'ios', 'web'],
+            'player_client': ['web', 'mweb', 'android', 'ios'],
+        },
+        'youtubepot-bgutilhttp': {
+            'base_url': [pot_server],
         }
     }
     if os.path.exists(cookie_path):
