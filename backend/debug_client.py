@@ -1,20 +1,15 @@
 import yt_dlp
-import sys
 
-url = "https://youtu.be/LqAbjewIj6M"
-cookie_path = "/app/cookies.txt"
+test_urls = [
+    "https://www.instagram.com/reel/C-Uq2_8v123/",
+    "https://twitter.com/X/status/1800000000000000000",
+    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+]
 
-ydl = yt_dlp.YoutubeDL({
-    "quiet": False,
-    "noplaylist": True,
-    "format": "best",
-    "cookiefile": cookie_path,
-    "js_engine": "deno",
-})
-
-try:
-    info = ydl.extract_info(url, download=False)
-    print("SUCCESS WITH COOKIES! Title:", info.get("title"))
-    print("Formats:", len(info.get("formats", [])))
-except Exception as e:
-    print("FAILED WITH COOKIES:", e)
+for u in test_urls:
+    try:
+        ydl = yt_dlp.YoutubeDL({"quiet": True, "noplaylist": True, "format": "best"})
+        info = ydl.extract_info(u, download=False)
+        print("URL:", u, "-> SUCCESS! Title:", info.get("title", "")[:40])
+    except Exception as e:
+        print("URL:", u, "-> FAILED:", str(e)[:60])
