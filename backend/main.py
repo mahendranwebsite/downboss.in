@@ -185,16 +185,16 @@ async def stream_download(
 
     common_extractor_args = {
         'youtube': {
-            'player_client': ['android', 'ios', 'mweb'],
-            'player_skip': ['web'],
+            'player_client': ['web_embedded', 'tv_embedded', 'android', 'ios'],
         }
-    } if not has_cookies else {}
+    }
 
     base_ydl_opts: Dict[str, Any] = {
         'quiet': True,
         'no_warnings': True,
         'noplaylist': True,
         'socket_timeout': 45,
+        'extractor_args': common_extractor_args,
     }
     if has_deno:
         base_ydl_opts['remote_components'] = ['ejs:github']
@@ -217,8 +217,6 @@ async def stream_download(
         }
         if has_cookies:
             ydl_opts['cookiefile'] = cookie_path
-        else:
-            ydl_opts['extractor_args'] = common_extractor_args
     else:
         out_template = os.path.join(TEMP_DIR, f"{download_id}_video.%(ext)s")
         max_height = 1080
@@ -250,8 +248,6 @@ async def stream_download(
         }
         if has_cookies:
             ydl_opts['cookiefile'] = cookie_path
-        else:
-            ydl_opts['extractor_args'] = common_extractor_args
 
     try:
         try:

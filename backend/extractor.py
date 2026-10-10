@@ -253,14 +253,13 @@ async def extract_media_info(url: str) -> Dict[str, Any]:
     elif has_node:
         ydl_opts['remote_components'] = ['ejs:github']
         ydl_opts['js_engine'] = 'node'
+    ydl_opts['extractor_args'] = {
+        'youtube': {
+            'player_client': ['web_embedded', 'tv_embedded', 'android', 'ios'],
+        }
+    }
     if os.path.exists(cookie_path):
         ydl_opts['cookiefile'] = cookie_path
-    else:
-        ydl_opts['extractor_args'] = {
-            'youtube': {
-                'player_client': ['android', 'ios', 'mweb'],
-            }
-        }
 
     loop = asyncio.get_event_loop()
     def _extract():
