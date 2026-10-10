@@ -35,27 +35,41 @@ export async function downloadMediaFile(
     targetDownloadUrl = `${BACKEND_URL}${url}`;
   }
 
-  if (onProgress) onProgress(30);
+  if (onProgress) onProgress(50);
 
-  // Trigger instant native browser download
-  // Uses the user's full line internet bandwidth straight to their Downloads folder
-  const link = document.createElement('a');
-  link.href = targetDownloadUrl;
-  link.setAttribute('download', filename);
-  link.setAttribute('target', '_blank');
-  link.style.display = 'none';
-  document.body.appendChild(link);
-  link.click();
+  // 1. Trigger via hidden iframe (100% bypasses Chrome popup blocker & opens Downloads tray)
+  try {
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = targetDownloadUrl;
+    document.body.appendChild(iframe);
+    setTimeout(() => {
+      try {
+        document.body.removeChild(iframe);
+      } catch {}
+    }, 45000);
+  } catch (frameErr) {
+    console.warn('Iframe download trigger error:', frameErr);
+  }
+
+  // 2. Also trigger direct anchor download without target=_blank
+  try {
+    const link = document.createElement('a');
+    link.href = targetDownloadUrl;
+    link.setAttribute('download', filename);
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+      try {
+        document.body.removeChild(link);
+      } catch {}
+    }, 2000);
+  } catch (linkErr) {
+    console.warn('Anchor download trigger error:', linkErr);
+  }
 
   if (onProgress) onProgress(100);
-
-  setTimeout(() => {
-    try {
-      document.body.removeChild(link);
-    } catch {
-      // Element already removed
-    }
-  }, 2000);
 }
 
 export function triggerBlobDownload(blob: Blob, filename: string): void {
