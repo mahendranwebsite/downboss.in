@@ -121,21 +121,18 @@ export const MediaResult: React.FC<MediaResultProps> = ({
   return (
     <div id="mediaPreviewContainer" className="flex flex-col gap-4 bg-white dark:bg-darkCard p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-xl transition-all">
       
-      {/* Loading Skeleton & Progress Simulation */}
+      {/* Loading State without technical decrypting texts */}
       {isLoading && (
-        <div id="loadingState" className="flex flex-col items-center py-8 gap-4 animate-fadeIn">
-          <div className="w-12 h-12 rounded-full border-4 border-indigo-200 dark:border-indigo-950 border-t-indigo-600 animate-spin"></div>
-          <div className="text-center space-y-1">
-            <p className="font-semibold text-sm text-gray-800 dark:text-gray-200" id="progressStatus">
-              {progressStatus || 'Extracting media links...'}
-            </p>
-            <p className="text-xs text-gray-400">Communicating with target server & decrypting stream</p>
+        <div id="loadingState" className="flex flex-col items-center justify-center py-12 gap-5 animate-fadeIn">
+          <div className="relative flex items-center justify-center">
+            <div className="w-14 h-14 rounded-full border-4 border-indigo-500/20 border-t-indigo-600 animate-spin"></div>
+            <div className="absolute inset-0 rounded-full blur-md bg-indigo-500/10 animate-pulse"></div>
           </div>
-          <div className="w-full max-w-md bg-gray-100 dark:bg-gray-800 rounded-full h-2 overflow-hidden">
+          <div className="w-full max-w-sm bg-gray-100 dark:bg-gray-800/80 rounded-full h-2 overflow-hidden shadow-inner">
             <div
               id="progressBar"
-              className="bg-gradient-to-r from-indigo-500 to-purple-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${progressPercent}%` }}
+              className="bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 h-2 rounded-full transition-all duration-300 shadow-sm"
+              style={{ width: `${Math.max(progressPercent, 15)}%` }}
             ></div>
           </div>
         </div>
@@ -192,12 +189,12 @@ export const MediaResult: React.FC<MediaResultProps> = ({
                   </h3>
                 </div>
 
-                {/* Quality Selector */}
+                {/* Quality Selector (Shows only actually available qualities) */}
                 <div className="space-y-2">
                   <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">
-                    Select Quality / Format
+                    Available Quality / Format
                   </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2" id="qualityOptions">
+                  <div className="flex flex-wrap gap-2.5" id="qualityOptions">
                     {mediaData.formats && mediaData.formats.length > 0 ? (
                       mediaData.formats.map((fmt, idx) => {
                         const isActive = selectedQuality === fmt.quality || (!selectedQuality && idx === 0);
@@ -206,18 +203,21 @@ export const MediaResult: React.FC<MediaResultProps> = ({
                             key={idx}
                             type="button"
                             onClick={() => setSelectedQuality(fmt.quality)}
-                            className={`quality-btn px-3 py-3 rounded-xl border text-xs font-bold flex items-center justify-center text-center transition-all ${
+                            className={`quality-btn px-4 py-2.5 rounded-xl border flex flex-col items-center justify-center text-center transition-all ${
                               isActive
-                                ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                                : 'border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:border-indigo-400'
+                                ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 shadow-md shadow-indigo-500/10 scale-[1.02]'
+                                : 'border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:border-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                             }`}
                           >
-                            <span>{fmt.quality}</span>
+                            <span className="font-bold text-xs sm:text-sm">{fmt.quality}</span>
+                            {fmt.size && (
+                              <span className="text-[10px] opacity-70 font-normal mt-0.5">{fmt.size}</span>
+                            )}
                           </button>
                         );
                       })
                     ) : (
-                      <button className="quality-btn active px-3 py-3 rounded-xl border border-indigo-600 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 text-xs font-bold flex items-center justify-center text-center">
+                      <button className="quality-btn active px-4 py-2.5 rounded-xl border border-indigo-600 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 text-xs font-bold flex items-center justify-center text-center">
                         <span>Original HD</span>
                       </button>
                     )}

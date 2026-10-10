@@ -23,26 +23,30 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    const urlLower = resolvedUrl.toLowerCase();
+    let referer = 'https://www.google.com/';
+    if (urlLower.includes('instagram.com') || urlLower.includes('cdninstagram') || urlLower.includes('fbcdn.net')) {
+      referer = 'https://www.instagram.com/';
+    } else if (urlLower.includes('twitter.com') || urlLower.includes('x.com') || urlLower.includes('twimg.com')) {
+      referer = 'https://twitter.com/';
+    }
+
     const upstreamRes = await fetch(resolvedUrl, {
       headers: {
         'User-Agent':
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
-        Referer: 'https://www.google.com/'
+        Referer: referer,
+        Accept: '*/*'
       },
       redirect: 'follow'
     });
 
     if (!upstreamRes.ok || !upstreamRes.body) {
-      // Fallback content in case remote blocks hotlinking
-      const dummyContent = `DownBoss attachment file simulation for: ${cleanFilename}\nSource: ${targetUrl}`;
-      return new NextResponse(dummyContent, {
-        headers: {
-          'Content-Disposition': `attachment; filename="${cleanFilename}"`,
-          'Content-Type': 'application/octet-stream',
-          'Access-Control-Allow-Origin': '*',
-          'Cache-Control': 'no-cache'
-        }
-      });
+      const errText = await upstreamRes.text().catch(() => '');
+      return NextResponse.json(
+        { error: errText || `Media stream error (Status: ${upstreamRes.status})` },
+        { status: upstreamRes.status >= 400 ? upstreamRes.status : 502 }
+      );
     }
 
     const contentType = upstreamRes.headers.get('content-type') || 'application/octet-stream';
@@ -65,14 +69,9 @@ export async function GET(req: NextRequest) {
       headers
     });
   } catch (err: any) {
-    // If upstream fetch threw network error, return simulated downloadable blob
-    const fallbackText = `DownBoss media file: ${cleanFilename}\nGenerated successfully.`;
-    return new NextResponse(fallbackText, {
-      headers: {
-        'Content-Disposition': `attachment; filename="${cleanFilename}"`,
-        'Content-Type': 'application/octet-stream',
-        'Access-Control-Allow-Origin': '*'
-      }
-    });
+    return NextResponse.json(
+      { error: `Download failed: ${err?.message || 'Remote media server error'}` },
+      { status: 500 }
+    );
   }
 }

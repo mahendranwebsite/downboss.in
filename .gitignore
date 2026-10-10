@@ -35,9 +35,6 @@ temp_downloads/
 .env.development.local
 .env.test.local
 .env.production.local
-cookies.txt
-*.cookies.txt
-backend/cookies.txt
 
 # OS files
 .DS_Store

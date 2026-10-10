@@ -419,51 +419,109 @@ async def extract_media_info(url: str) -> Dict[str, Any]:
     real_duration = format_duration(info.get('duration'))
     media_type = f"{platform.capitalize()} Video"
 
-    formats_list = []
-    encoded_url = url_clean
+    def build_dynamic_formats(info_dict: Dict[str, Any], raw_url: str) -> List[Dict[str, Any]]:
+        formats = info_dict.get('formats', [])
+        video_id = info_dict.get('id', 'media')
+        duration = info_dict.get('duration') or 0
 
-    formats_list.append({
-        "quality": "4K Ultra HD",
-        "res": "2160p",
-        "size": "~ 150 MB",
-        "ext": "mp4",
-        "url": f"/api/download?url={encoded_url}&quality=4k&filename=DownBoss_{info.get('id', 'video')}_4k.mp4"
-    })
-    formats_list.append({
-        "quality": "2K Quad HD",
-        "res": "1440p",
-        "size": "~ 85 MB",
-        "ext": "mp4",
-        "url": f"/api/download?url={encoded_url}&quality=2k&filename=DownBoss_{info.get('id', 'video')}_2k.mp4"
-    })
-    formats_list.append({
-        "quality": "1080p Full HD",
-        "res": "1080p",
-        "size": "~ 45 MB",
-        "ext": "mp4",
-        "url": f"/api/download?url={encoded_url}&quality=1080p&filename=DownBoss_{info.get('id', 'video')}_1080p.mp4"
-    })
-    formats_list.append({
-        "quality": "720p HD",
-        "res": "720p",
-        "size": "~ 22 MB",
-        "ext": "mp4",
-        "url": f"/api/download?url={encoded_url}&quality=720p&filename=DownBoss_{info.get('id', 'video')}_720p.mp4"
-    })
-    formats_list.append({
-        "quality": "480p SD",
-        "res": "480p",
-        "size": "~ 12 MB",
-        "ext": "mp4",
-        "url": f"/api/download?url={encoded_url}&quality=480p&filename=DownBoss_{info.get('id', 'video')}_480p.mp4"
-    })
-    formats_list.append({
-        "quality": "MP3 Audio",
-        "res": "MP3",
-        "size": "~ 4 MB",
-        "ext": "mp3",
-        "url": f"/api/download?url={encoded_url}&quality=mp3&filename=DownBoss_{info.get('id', 'audio')}.mp3"
-    })
+        # Determine available resolutions
+        available_heights = set()
+        max_res = 0
+
+        for f in formats:
+            h = f.get('height')
+            w = f.get('width')
+            if h and h > 0:
+                eff = min(w, h) if (w and w > 0) else h
+                available_heights.add(eff)
+                if eff > max_res:
+                    max_res = eff
+
+        top_h = info_dict.get('height') or 0
+        top_w = info_dict.get('width') or 0
+        top_eff = min(top_w, top_h) if (top_w and top_h) else top_h
+        if top_eff > max_res:
+            max_res = top_eff
+
+        # If still 0, check if we have standard video
+        if max_res == 0 and info_dict.get('vcodec') != 'none':
+            max_res = 1080
+
+        # Format tiers: (Display Name, Resolution Label, URL Quality Param, Min Threshold, Max Height, MB/min estimate)
+        quality_tiers = [
+            ("4K Ultra HD", "2160p", "4k", 2000, 2160, 45),
+            ("2K Quad HD", "1440p", "2k", 1300, 1440, 25),
+            ("1080p Full HD", "1080p", "1080p", 900, 1080, 15),
+            ("720p HD", "720p", "720p", 600, 720, 8),
+            ("480p SD", "480p", "480p", 350, 480, 4),
+            ("360p Low", "360p", "360p", 1, 360, 2.5),
+        ]
+
+        dynamic_formats = []
+
+        for name, res_label, q_arg, min_thresh, max_h, mb_rate in quality_tiers:
+            # Only include tier if video actually supports it
+            supports_tier = (max_res >= min_thresh) or any(min_thresh <= h <= max_h + 100 for h in available_heights)
+            if supports_tier:
+                # Find matching format for realistic file size
+                matching = [f for f in formats if f.get('height') and min_thresh <= f.get('height') <= max_h + 100]
+                size_str = ""
+                if matching:
+                    best_f = matching[-1]
+                    fs = best_f.get('filesize') or best_f.get('filesize_approx')
+                    if fs:
+                        size_str = f"~ {round(fs / (1024 * 1024), 1)} MB"
+                
+                if not size_str:
+                    if duration > 0:
+                        size_str = f"~ {max(1, round((duration / 60.0) * mb_rate, 1))} MB"
+                    else:
+                        size_str = "HD Quality"
+
+                dynamic_formats.append({
+                    "quality": name,
+                    "res": res_label,
+                    "size": size_str,
+                    "ext": "mp4",
+                    "url": f"/api/download?url={raw_url}&quality={q_arg}&filename=DownBoss_{video_id}_{q_arg}.mp4"
+                })
+
+        # Fallback if no specific tiers matched
+        if not dynamic_formats:
+            dynamic_formats.append({
+                "quality": "Best HD Video",
+                "res": f"{max_res}p" if max_res else "HD",
+                "size": "Original HD",
+                "ext": "mp4",
+                "url": f"/api/download?url={raw_url}&quality=best&filename=DownBoss_{video_id}_best.mp4"
+            })
+
+        # Add MP3 Audio option if audio is present
+        has_audio = any(f.get('acodec') != 'none' for f in formats) or info_dict.get('vcodec') != 'none' or duration > 0
+        if has_audio:
+            audio_size = ""
+            audio_fmts = [f for f in formats if f.get('vcodec') == 'none' and f.get('acodec') != 'none']
+            if audio_fmts:
+                best_a = audio_fmts[-1]
+                fs = best_a.get('filesize') or best_a.get('filesize_approx')
+                if fs:
+                    audio_size = f"~ {round(fs / (1024 * 1024), 1)} MB"
+            if not audio_size and duration > 0:
+                audio_size = f"~ {max(1, round((duration / 60.0) * 1.5, 1))} MB"
+            elif not audio_size:
+                audio_size = "~ 4 MB"
+
+            dynamic_formats.append({
+                "quality": "MP3 Audio",
+                "res": "MP3",
+                "size": audio_size,
+                "ext": "mp3",
+                "url": f"/api/download?url={raw_url}&quality=mp3&filename=DownBoss_{video_id}.mp3"
+            })
+
+        return dynamic_formats
+
+    formats_list = build_dynamic_formats(info, url_clean)
 
     return {
         "title": real_title,

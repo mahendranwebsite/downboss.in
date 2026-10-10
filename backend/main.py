@@ -43,6 +43,16 @@ info_cache = TTLCache(maxsize=1000, ttl=600)
 TEMP_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "temp_downloads")
 os.makedirs(TEMP_DIR, exist_ok=True)
 
+# Write/update cookies.txt if YTDL_COOKIES environment variable is provided in cloud
+cookie_env = os.environ.get("YTDL_COOKIES")
+cookie_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies.txt")
+if cookie_env:
+    try:
+        with open(cookie_file_path, "w", encoding="utf-8") as f:
+            f.write(cookie_env)
+    except Exception as e:
+        print(f"Failed to write YTDL_COOKIES: {e}")
+
 def cleanup_file(path: str):
     try:
         if os.path.exists(path):
@@ -105,21 +115,34 @@ async def stream_download(
     if not safe_filename:
         safe_filename = "DownBoss_media.mp4"
 
-    # 1. If direct sample URL, CDN media, or direct image (.jpg, .png, .webp, pbs.twimg.com)
+    # 1. If direct sample URL, CDN media, or direct media (.mp4, .jpg, cdninstagram, etc.)
+    import re
+    import shutil
     url_lower = url.lower()
     is_direct_file = (
-        url_lower.endswith(".mp4") or url_lower.endswith(".mp3") or
-        url_lower.endswith(".jpg") or url_lower.endswith(".jpeg") or
-        url_lower.endswith(".png") or url_lower.endswith(".webp") or
-        "pbs.twimg.com" in url_lower or "format=" in url_lower or
-        "storage.googleapis.com" in url_lower or "soundhelix.com" in url_lower
+        bool(re.search(r'\.(?:mp4|mp3|m4a|webm|jpg|jpeg|png|webp)(?:[?&#]|$)', url_lower)) or
+        "cdninstagram.com" in url_lower or
+        "fbcdn.net" in url_lower or
+        "pbs.twimg.com" in url_lower or
+        "twimg.com" in url_lower or
+        "format=" in url_lower or
+        "unsplash.com" in url_lower or
+        "storage.googleapis.com" in url_lower or
+        "soundhelix.com" in url_lower
     )
     if is_direct_file:
-        client = httpx.AsyncClient(timeout=60.0, follow_redirects=True)
+        client = httpx.AsyncClient(timeout=90.0, follow_redirects=True)
         try:
+            referer = "https://www.google.com/"
+            if "instagram" in url_lower or "cdninstagram" in url_lower or "fbcdn" in url_lower:
+                referer = "https://www.instagram.com/"
+            elif "twimg" in url_lower or "twitter" in url_lower:
+                referer = "https://twitter.com/"
+
             req = client.build_request("GET", url, headers={
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
-                "Referer": "https://www.google.com/"
+                "Referer": referer,
+                "Accept": "*/*"
             })
             res = await client.send(req, stream=True)
 
@@ -151,13 +174,13 @@ async def stream_download(
     
     clean_url = url.strip()
     if "youtube.com/watch" in clean_url and "v=" in clean_url:
-        import re
         vid_match = re.search(r'[?&]v=([a-zA-Z0-9_-]+)', clean_url)
         if vid_match:
             clean_url = f"https://www.youtube.com/watch?v={vid_match.group(1)}"
 
     cookie_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies.txt")
     has_cookies = os.path.exists(cookie_path)
+    has_deno = shutil.which("deno") is not None
 
     common_extractor_args = {
         'youtube': {
@@ -166,9 +189,20 @@ async def stream_download(
         }
     } if not has_cookies else {}
 
+    base_ydl_opts: Dict[str, Any] = {
+        'quiet': True,
+        'no_warnings': True,
+        'noplaylist': True,
+        'socket_timeout': 45,
+    }
+    if has_deno:
+        base_ydl_opts['remote_components'] = ['ejs:github']
+        base_ydl_opts['js_engine'] = 'deno'
+
     if is_audio:
         out_template = os.path.join(TEMP_DIR, f"{download_id}_audio.%(ext)s")
         ydl_opts = {
+            **base_ydl_opts,
             'outtmpl': out_template,
             'format': 'bestaudio/best',
             'postprocessors': [{
@@ -176,12 +210,6 @@ async def stream_download(
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
             }],
-            'quiet': True,
-            'no_warnings': True,
-            'noplaylist': True,
-            'socket_timeout': 30,
-            'remote_components': ['ejs:github'],
-            'js_engine': 'deno',
         }
         if has_cookies:
             ydl_opts['cookiefile'] = cookie_path
@@ -201,17 +229,20 @@ async def stream_download(
             max_height = 720
         elif "480" in quality_lower:
             max_height = 480
+        elif "360" in quality_lower:
+            max_height = 360
+        else:
+            max_height = 2160
         
+        format_selector = (
+            f'bestvideo[height<={max_height}]+bestaudio/best[height<={max_height}]/'
+            f'bestvideo+bestaudio/best'
+        )
         ydl_opts = {
+            **base_ydl_opts,
             'outtmpl': out_template,
-            'format': f'bestvideo[height<={max_height}]+bestaudio/best[height<={max_height}]/best',
+            'format': format_selector,
             'merge_output_format': 'mp4',
-            'quiet': True,
-            'no_warnings': True,
-            'noplaylist': True,
-            'socket_timeout': 30,
-            'remote_components': ['ejs:github'],
-            'js_engine': 'deno',
         }
         if has_cookies:
             ydl_opts['cookiefile'] = cookie_path
@@ -219,8 +250,20 @@ async def stream_download(
             ydl_opts['extractor_args'] = common_extractor_args
 
     try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([clean_url])
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([clean_url])
+        except Exception as primary_err:
+            # If failed with cookies, try falling back without cookies for public platforms (e.g. reels)
+            if has_cookies and 'cookiefile' in ydl_opts:
+                ydl_opts_fallback = {**ydl_opts}
+                ydl_opts_fallback.pop('cookiefile', None)
+                if 'extractor_args' not in ydl_opts_fallback:
+                    ydl_opts_fallback['extractor_args'] = common_extractor_args
+                with yt_dlp.YoutubeDL(ydl_opts_fallback) as ydl_fallback:
+                    ydl_fallback.download([clean_url])
+            else:
+                raise primary_err
 
         # Find the produced file
         pattern = os.path.join(TEMP_DIR, f"{download_id}_*")

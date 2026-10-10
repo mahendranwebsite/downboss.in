@@ -68,63 +68,48 @@ export async function downloadMediaFile(
       res = await fetch(proxyUrl);
     }
 
-    if (res && res.ok) {
-      const contentLength = res.headers.get('content-length');
-      const totalBytes = contentLength ? parseInt(contentLength, 10) : 0;
+    if (!res || !res.ok) {
+      const errData = await res?.json().catch(() => ({})) || {};
+      throw new Error(errData.error || errData.detail || 'Download stream unreachable. Please try again.');
+    }
 
-      if (res.body && totalBytes > 0) {
-        clearInterval(progressTimer);
-        const reader = res.body.getReader();
-        const chunks: BlobPart[] = [];
-        let receivedBytes = 0;
+    const contentLength = res.headers.get('content-length');
+    const totalBytes = contentLength ? parseInt(contentLength, 10) : 0;
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          if (value) {
-            chunks.push(value);
-            receivedBytes += value.length;
-            const pct = Math.min(95, Math.round((receivedBytes / totalBytes) * 100));
-            if (onProgress) onProgress(pct);
-          }
+    if (res.body && totalBytes > 0) {
+      clearInterval(progressTimer);
+      const reader = res.body.getReader();
+      const chunks: BlobPart[] = [];
+      let receivedBytes = 0;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) {
+          chunks.push(value);
+          receivedBytes += value.length;
+          const pct = Math.min(95, Math.round((receivedBytes / totalBytes) * 100));
+          if (onProgress) onProgress(pct);
         }
-
-        const blob = new Blob(chunks, {
-          type: res.headers.get('content-type') || 'application/octet-stream'
-        });
-        if (onProgress) onProgress(100);
-        triggerBlobDownload(blob, filename);
-        return;
       }
 
-      const blob = await res.blob();
-      clearInterval(progressTimer);
+      const blob = new Blob(chunks, {
+        type: res.headers.get('content-type') || 'application/octet-stream'
+      });
       if (onProgress) onProgress(100);
       triggerBlobDownload(blob, filename);
       return;
     }
-  } catch (err) {
-    console.warn('Blob fetch failed, falling back to hidden iframe trigger:', err);
-  } finally {
-    clearInterval(progressTimer);
-  }
 
-  // 2. Fallback: Trigger download via a hidden iframe pointing to proxy
-  // A hidden iframe never opens a new page/tab or navigates the active page
-  try {
-    const proxyUrl = `/api/proxy?url=${encodeURIComponent(targetDownloadUrl)}&filename=${encodeURIComponent(filename)}`;
-    const iframe = document.createElement('iframe');
-    iframe.style.display = 'none';
-    iframe.src = proxyUrl;
-    document.body.appendChild(iframe);
-    setTimeout(() => {
-      if (document.body.contains(iframe)) {
-        document.body.removeChild(iframe);
-      }
-    }, 20000);
-  } catch (e) {
-    console.error('All download methods failed:', e);
-    throw new Error('Download failed to start.');
+    const blob = await res.blob();
+    clearInterval(progressTimer);
+    if (onProgress) onProgress(100);
+    triggerBlobDownload(blob, filename);
+    return;
+  } catch (err: any) {
+    clearInterval(progressTimer);
+    console.error('Download error:', err);
+    throw new Error(err?.message || 'Download failed. Please try again.');
   }
 }
 

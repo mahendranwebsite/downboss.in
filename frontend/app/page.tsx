@@ -52,23 +52,20 @@ export default function HomePage() {
     setIsLoading(true);
     setMediaData(null);
     setFetchError(null);
-    setProgressPercent(10);
-    setProgressStatus('Extracting media links...');
+    setProgressPercent(15);
+    setProgressStatus('');
 
-    // Progress simulation steps matching the reference HTML
+    // Smooth progress animation
     const timer1 = setTimeout(() => {
-      setProgressPercent(35);
-      setProgressStatus('Connecting to CDN gateway...');
+      setProgressPercent(45);
     }, 250);
 
     const timer2 = setTimeout(() => {
-      setProgressPercent(65);
-      setProgressStatus('Decrypting media stream...');
+      setProgressPercent(75);
     }, 550);
 
     const timer3 = setTimeout(() => {
-      setProgressPercent(85);
-      setProgressStatus('Generating download links...');
+      setProgressPercent(90);
     }, 850);
 
     try {
@@ -78,13 +75,12 @@ export default function HomePage() {
       clearTimeout(timer3);
 
       setProgressPercent(100);
-      setProgressStatus('Ready to download!');
 
       setTimeout(() => {
         setMediaData(data);
         setIsLoading(false);
         showToast('Media loaded successfully!');
-      }, 350);
+      }, 300);
     } catch (err: any) {
       clearTimeout(timer1);
       clearTimeout(timer2);
