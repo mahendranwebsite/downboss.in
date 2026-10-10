@@ -289,8 +289,10 @@ async def stream_download(
             max_height = 2160
         
         format_selector = (
-            f'bestvideo[height<={max_height}]+bestaudio/best[height<={max_height}]/'
-            f'bestvideo+bestaudio/best'
+            f'bestvideo[height<={max_height}]+bestaudio/'
+            f'best[height<={max_height}]/'
+            f'bestvideo+bestaudio/'
+            f'best'
         )
         ydl_opts = {
             **base_ydl_opts,
