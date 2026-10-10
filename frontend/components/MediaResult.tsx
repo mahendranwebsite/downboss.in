@@ -61,11 +61,14 @@ export const MediaResult: React.FC<MediaResultProps> = ({
         date: new Date().toLocaleDateString(),
         url: mediaData.originalUrl
       });
-      onShowToast(`Downloaded in ${activeFormat?.quality || 'HD'}!`);
+      onShowToast(`Downloading ${activeFormat?.quality || 'HD'}! Check your browser downloads.`);
+      setTimeout(() => {
+        setIsDownloading(false);
+        setDownloadPercent(0);
+      }, 2500);
     } catch (e) {
       console.error(e);
       onShowToast('Download failed. Please try again.');
-    } finally {
       setIsDownloading(false);
       setDownloadPercent(0);
     }
@@ -232,10 +235,10 @@ export const MediaResult: React.FC<MediaResultProps> = ({
                     disabled={isDownloading}
                     className="btn-shimmer relative overflow-hidden flex-1 py-3.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm shadow-lg shadow-emerald-600/20 hover:shadow-emerald-600/40 flex items-center justify-center gap-2 active:scale-[0.98] hover:scale-[1.01] transition-all disabled:opacity-90"
                   >
-                    <DownloadCloud className={`w-5 h-5 ${isDownloading ? 'animate-bounce' : ''}`} />
+                    <DownloadCloud className={`w-5 h-5 ${isDownloading ? 'animate-bounce text-white' : ''}`} />
                     <span>
                       {isDownloading
-                        ? `Downloading... ${downloadPercent}%`
+                        ? 'Starting Browser Download... ⬇'
                         : `Download Selected (${activeFormat?.quality || 'HD'})`}
                     </span>
                   </button>

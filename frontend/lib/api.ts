@@ -35,101 +35,27 @@ export async function downloadMediaFile(
     targetDownloadUrl = `${BACKEND_URL}${url}`;
   }
 
-  // Initial progress
-  if (onProgress) onProgress(10);
+  if (onProgress) onProgress(30);
 
-  // Progressive timer to simulate smooth downloading updates (10%, 20%, 30%...)
-  let currentPercent = 10;
-  const progressTimer = setInterval(() => {
-    if (currentPercent < 90) {
-      currentPercent += 10;
-      if (onProgress) onProgress(currentPercent);
-    }
-  }, 400);
+  // Trigger instant native browser download
+  // Uses the user's full line internet bandwidth straight to their Downloads folder
+  const link = document.createElement('a');
+  link.href = targetDownloadUrl;
+  link.setAttribute('download', filename);
+  link.setAttribute('target', '_blank');
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
 
-  // 1. Fetch the file as a Blob or direct stream
-  try {
-    let res: Response | null = null;
+  if (onProgress) onProgress(100);
 
-    // Try direct fetch from backend first (bypasses Vercel serverless proxy & timeouts)
+  setTimeout(() => {
     try {
-      res = await fetch(targetDownloadUrl);
-    } catch (directErr) {
-      console.warn('Direct fetch error, attempting proxy fallback:', directErr);
-      res = null;
+      document.body.removeChild(link);
+    } catch {
+      // Element already removed
     }
-
-    // If direct fetch didn't succeed, fallback to streaming proxy
-    if (!res || !res.ok) {
-      try {
-        const proxyUrl = `/api/proxy?url=${encodeURIComponent(targetDownloadUrl)}&filename=${encodeURIComponent(filename)}`;
-        res = await fetch(proxyUrl);
-      } catch (proxyErr) {
-        console.warn('Proxy fetch error:', proxyErr);
-        res = null;
-      }
-    }
-
-    // If both fetch attempts failed, trigger native browser download directly
-    if (!res || !res.ok) {
-      clearInterval(progressTimer);
-      if (onProgress) onProgress(100);
-      const link = document.createElement('a');
-      link.href = targetDownloadUrl;
-      link.download = filename;
-      link.target = '_blank';
-      document.body.appendChild(link);
-      link.click();
-      setTimeout(() => document.body.removeChild(link), 1000);
-      return;
-    }
-
-    const contentLength = res.headers.get('content-length');
-    const totalBytes = contentLength ? parseInt(contentLength, 10) : 0;
-
-    if (res.body && totalBytes > 0) {
-      clearInterval(progressTimer);
-      const reader = res.body.getReader();
-      const chunks: BlobPart[] = [];
-      let receivedBytes = 0;
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        if (value) {
-          chunks.push(value);
-          receivedBytes += value.length;
-          const pct = Math.min(95, Math.round((receivedBytes / totalBytes) * 100));
-          if (onProgress) onProgress(pct);
-        }
-      }
-
-      const blob = new Blob(chunks, {
-        type: res.headers.get('content-type') || 'application/octet-stream'
-      });
-      if (onProgress) onProgress(100);
-      triggerBlobDownload(blob, filename);
-      return;
-    }
-
-    const blob = await res.blob();
-    clearInterval(progressTimer);
-    if (onProgress) onProgress(100);
-    triggerBlobDownload(blob, filename);
-    return;
-  } catch (err: any) {
-    clearInterval(progressTimer);
-    console.warn('Blob download fallback to direct anchor link:', err);
-    // Final fail-safe: trigger browser download directly via anchor link
-    if (onProgress) onProgress(100);
-    const link = document.createElement('a');
-    link.href = targetDownloadUrl;
-    link.download = filename;
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    setTimeout(() => document.body.removeChild(link), 1000);
-  }
+  }, 2000);
 }
 
 export function triggerBlobDownload(blob: Blob, filename: string): void {
