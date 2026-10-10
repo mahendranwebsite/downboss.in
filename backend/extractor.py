@@ -255,7 +255,7 @@ async def extract_media_info(url: str) -> Dict[str, Any]:
         ydl_opts['js_engine'] = 'node'
     ydl_opts['extractor_args'] = {
         'youtube': {
-            'player_client': ['web_embedded', 'tv_embedded', 'android', 'ios'],
+            'player_client': ['web_embedded', 'android', 'ios'],
         }
     }
     if os.path.exists(cookie_path):

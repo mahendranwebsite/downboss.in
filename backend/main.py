@@ -1,4 +1,5 @@
 import os
+import asyncio
 import time
 import uuid
 import glob
@@ -17,8 +18,8 @@ from slowapi.errors import RateLimitExceeded
 
 from extractor import extract_media_info, detect_platform
 
-# Rate Limiter setup (15 requests per minute per IP)
-limiter = Limiter(key_func=get_remote_address, default_limits=["15/minute"])
+# Rate Limiter setup (120 requests per minute per IP for smooth responsive browsing)
+limiter = Limiter(key_func=get_remote_address, default_limits=["120/minute"])
 
 app = FastAPI(
     title="DownBoss Media Extraction API",
@@ -185,7 +186,7 @@ async def stream_download(
 
     common_extractor_args = {
         'youtube': {
-            'player_client': ['web_embedded', 'tv_embedded', 'android', 'ios'],
+            'player_client': ['web_embedded', 'android', 'ios'],
         }
     }
 
@@ -250,9 +251,13 @@ async def stream_download(
             ydl_opts['cookiefile'] = cookie_path
 
     try:
-        try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        loop = asyncio.get_event_loop()
+        def _exec_download(opts):
+            with yt_dlp.YoutubeDL(opts) as ydl:
                 ydl.download([clean_url])
+
+        try:
+            await loop.run_in_executor(None, _exec_download, ydl_opts)
         except Exception as primary_err:
             # If failed with cookies, try falling back without cookies for public platforms (e.g. reels)
             if has_cookies and 'cookiefile' in ydl_opts:
@@ -260,8 +265,7 @@ async def stream_download(
                 ydl_opts_fallback.pop('cookiefile', None)
                 if 'extractor_args' not in ydl_opts_fallback:
                     ydl_opts_fallback['extractor_args'] = common_extractor_args
-                with yt_dlp.YoutubeDL(ydl_opts_fallback) as ydl_fallback:
-                    ydl_fallback.download([clean_url])
+                await loop.run_in_executor(None, _exec_download, ydl_opts_fallback)
             else:
                 raise primary_err
 
