@@ -472,11 +472,21 @@ async def extract_media_info(url: str) -> Dict[str, Any]:
                 # Find matching format for realistic file size
                 matching = [f for f in formats if f.get('height') and min_thresh <= f.get('height') <= max_h + 100]
                 size_str = ""
+                direct_cdn_url = None
                 if matching:
                     best_f = matching[-1]
                     fs = best_f.get('filesize') or best_f.get('filesize_approx')
                     if fs:
                         size_str = f"~ {round(fs / (1024 * 1024), 1)} MB"
+                    
+                    # Look for progressive format (video + audio combined) with direct CDN URL for instant downloads
+                    prog_matches = [f for f in matching if f.get('acodec') != 'none' and f.get('vcodec') != 'none' and f.get('url')]
+                    if prog_matches:
+                        direct_cdn_url = prog_matches[-1].get('url')
+                    elif platform != 'youtube':
+                        f_url = best_f.get('url')
+                        if f_url:
+                            direct_cdn_url = f_url
                 
                 if not size_str:
                     if duration > 0:
@@ -484,46 +494,73 @@ async def extract_media_info(url: str) -> Dict[str, Any]:
                     else:
                         size_str = "HD Quality"
 
-                dynamic_formats.append({
+                # Direct stream CDN URL for instant downloads, or fallback to backend merger
+                if direct_cdn_url:
+                    import urllib.parse
+                    dl_url = f"/api/download?url={urllib.parse.quote(direct_cdn_url)}&filename=DownBoss_{video_id}_{q_arg}.mp4"
+                else:
+                    dl_url = f"/api/download?url={raw_url}&quality={q_arg}&filename=DownBoss_{video_id}_{q_arg}.mp4"
+
+                fmt_data = {
                     "quality": name,
                     "res": res_label,
                     "size": size_str,
                     "ext": "mp4",
-                    "url": f"/api/download?url={raw_url}&quality={q_arg}&filename=DownBoss_{video_id}_{q_arg}.mp4"
-                })
+                    "url": dl_url
+                }
+                if direct_cdn_url:
+                    fmt_data["direct_url"] = direct_cdn_url
+                dynamic_formats.append(fmt_data)
 
         # Fallback if no specific tiers matched
         if not dynamic_formats:
-            dynamic_formats.append({
+            direct_fallback_url = info_dict.get('url') if platform != 'youtube' else None
+            if direct_fallback_url:
+                import urllib.parse
+                fallback_dl = f"/api/download?url={urllib.parse.quote(direct_fallback_url)}&filename=DownBoss_{video_id}_best.mp4"
+            else:
+                fallback_dl = f"/api/download?url={raw_url}&quality=best&filename=DownBoss_{video_id}_best.mp4"
+
+            fallback_fmt = {
                 "quality": "Best HD Video",
                 "res": f"{max_res}p" if max_res else "HD",
                 "size": "Original HD",
                 "ext": "mp4",
-                "url": f"/api/download?url={raw_url}&quality=best&filename=DownBoss_{video_id}_best.mp4"
-            })
+                "url": fallback_dl
+            }
+            if direct_fallback_url:
+                fallback_fmt["direct_url"] = direct_fallback_url
+            dynamic_formats.append(fallback_fmt)
 
         # Add MP3 Audio option if audio is present
         has_audio = any(f.get('acodec') != 'none' for f in formats) or info_dict.get('vcodec') != 'none' or duration > 0
         if has_audio:
             audio_size = ""
+            direct_audio_url = None
             audio_fmts = [f for f in formats if f.get('vcodec') == 'none' and f.get('acodec') != 'none']
             if audio_fmts:
                 best_a = audio_fmts[-1]
                 fs = best_a.get('filesize') or best_a.get('filesize_approx')
                 if fs:
                     audio_size = f"~ {round(fs / (1024 * 1024), 1)} MB"
+                if best_a.get('url'):
+                    direct_audio_url = best_a.get('url')
             if not audio_size and duration > 0:
                 audio_size = f"~ {max(1, round((duration / 60.0) * 1.5, 1))} MB"
             elif not audio_size:
                 audio_size = "~ 4 MB"
 
-            dynamic_formats.append({
+            audio_dl_url = f"/api/download?url={raw_url}&quality=mp3&filename=DownBoss_{video_id}.mp3"
+            audio_fmt = {
                 "quality": "MP3 Audio",
                 "res": "MP3",
                 "size": audio_size,
                 "ext": "mp3",
-                "url": f"/api/download?url={raw_url}&quality=mp3&filename=DownBoss_{video_id}.mp3"
-            })
+                "url": audio_dl_url
+            }
+            if direct_audio_url:
+                audio_fmt["direct_url"] = direct_audio_url
+            dynamic_formats.append(audio_fmt)
 
         return dynamic_formats
 

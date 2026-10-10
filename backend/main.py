@@ -126,19 +126,29 @@ async def stream_download(
         "fbcdn.net" in url_lower or
         "pbs.twimg.com" in url_lower or
         "twimg.com" in url_lower or
+        "googlevideo.com" in url_lower or
+        "tiktokcdn.com" in url_lower or
+        "byteoversea.com" in url_lower or
+        "ibyteimg.com" in url_lower or
+        "pinterest.com" in url_lower or
+        "pinimg.com" in url_lower or
         "format=" in url_lower or
         "unsplash.com" in url_lower or
         "storage.googleapis.com" in url_lower or
         "soundhelix.com" in url_lower
     )
     if is_direct_file:
-        client = httpx.AsyncClient(timeout=90.0, follow_redirects=True)
+        client = httpx.AsyncClient(timeout=120.0, follow_redirects=True)
         try:
             referer = "https://www.google.com/"
             if "instagram" in url_lower or "cdninstagram" in url_lower or "fbcdn" in url_lower:
                 referer = "https://www.instagram.com/"
             elif "twimg" in url_lower or "twitter" in url_lower:
                 referer = "https://twitter.com/"
+            elif "googlevideo.com" in url_lower:
+                referer = "https://www.youtube.com/"
+            elif "tiktok" in url_lower or "byteoversea" in url_lower:
+                referer = "https://www.tiktok.com/"
 
             req = client.build_request("GET", url, headers={
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
@@ -153,17 +163,21 @@ async def stream_download(
 
             async def stream_content():
                 try:
-                    async for chunk in res.aiter_bytes(chunk_size=1024 * 64):
+                    async for chunk in res.aiter_bytes(chunk_size=1024 * 128):
                         yield chunk
                 finally:
                     await res.aclose()
                     await client.aclose()
 
-            content_type = res.headers.get("content-type", "application/octet-stream")
+            content_type = res.headers.get("content-type") or ("video/mp4" if safe_filename.endswith(".mp4") else "application/octet-stream")
+            content_length = res.headers.get("content-length")
             headers = {
                 "Content-Disposition": f'attachment; filename="{safe_filename}"',
-                "Access-Control-Expose-Headers": "Content-Disposition"
+                "Access-Control-Expose-Headers": "Content-Disposition, Content-Length"
             }
+            if content_length:
+                headers["Content-Length"] = content_length
+
             return StreamingResponse(stream_content(), status_code=200, headers=headers, media_type=content_type)
         except Exception as e:
             await client.aclose()
