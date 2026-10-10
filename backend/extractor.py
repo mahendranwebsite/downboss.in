@@ -239,13 +239,20 @@ async def extract_media_info(url: str) -> Dict[str, Any]:
         'socket_timeout': 30,
         'format': 'all',
         'ignore_no_formats_error': True,
-        'remote_components': ['ejs:github'],
-        'js_engine': 'deno',
         'http_headers': {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
             'Accept-Language': 'en-US,en;q=0.9',
         }
     }
+    import shutil
+    has_deno = shutil.which("deno") is not None
+    has_node = shutil.which("node") is not None
+    if has_deno:
+        ydl_opts['remote_components'] = ['ejs:github']
+        ydl_opts['js_engine'] = 'deno'
+    elif has_node:
+        ydl_opts['remote_components'] = ['ejs:github']
+        ydl_opts['js_engine'] = 'node'
     if os.path.exists(cookie_path):
         ydl_opts['cookiefile'] = cookie_path
     else:

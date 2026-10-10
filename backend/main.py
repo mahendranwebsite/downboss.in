@@ -181,6 +181,7 @@ async def stream_download(
     cookie_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies.txt")
     has_cookies = os.path.exists(cookie_path)
     has_deno = shutil.which("deno") is not None
+    has_node = shutil.which("node") is not None
 
     common_extractor_args = {
         'youtube': {
@@ -198,6 +199,9 @@ async def stream_download(
     if has_deno:
         base_ydl_opts['remote_components'] = ['ejs:github']
         base_ydl_opts['js_engine'] = 'deno'
+    elif has_node:
+        base_ydl_opts['remote_components'] = ['ejs:github']
+        base_ydl_opts['js_engine'] = 'node'
 
     if is_audio:
         out_template = os.path.join(TEMP_DIR, f"{download_id}_audio.%(ext)s")
