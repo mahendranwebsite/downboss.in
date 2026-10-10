@@ -18,8 +18,19 @@ from slowapi.errors import RateLimitExceeded
 
 from extractor import extract_media_info, detect_platform
 
-# Rate Limiter setup (120 requests per minute per IP for smooth responsive browsing)
-limiter = Limiter(key_func=get_remote_address, default_limits=["120/minute"])
+import urllib.parse
+
+def get_real_client_ip(request: Request) -> str:
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    real_ip = request.headers.get("x-real-ip")
+    if real_ip:
+        return real_ip.strip()
+    return get_remote_address(request)
+
+# Rate Limiter setup (300 requests per minute per IP for high concurrency)
+limiter = Limiter(key_func=get_real_client_ip, default_limits=["300/minute"])
 
 app = FastAPI(
     title="DownBoss Media Extraction API",
@@ -61,6 +72,31 @@ def cleanup_file(path: str):
     except Exception as e:
         print(f"Cleanup error for {path}: {e}")
 
+def normalize_url(url: str) -> str:
+    try:
+        raw = url.strip()
+        parsed = urllib.parse.urlparse(raw)
+        netloc = parsed.netloc.lower()
+        if "youtube.com" in netloc or "youtu.be" in netloc:
+            qs = urllib.parse.parse_qs(parsed.query)
+            if "v" in qs and qs["v"]:
+                return f"https://www.youtube.com/watch?v={qs['v'][0]}"
+            parts = [p for p in parsed.path.split("/") if p]
+            if "youtu.be" in netloc and parts:
+                return f"https://www.youtube.com/watch?v={parts[0]}"
+            if "shorts" in parts:
+                idx = parts.index("shorts")
+                if idx + 1 < len(parts):
+                    return f"https://www.youtube.com/watch?v={parts[idx+1]}"
+        if "instagram.com" in netloc:
+            clean_path = parsed.path.rstrip("/")
+            return f"https://www.instagram.com{clean_path}/"
+        if "twitter.com" in netloc or "x.com" in netloc:
+            return f"https://x.com{parsed.path}"
+    except Exception:
+        pass
+    return url.strip()
+
 class InfoRequest(BaseModel):
     url: str
 
@@ -78,7 +114,7 @@ def health():
     return {"status": "ok", "timestamp": time.time()}
 
 @app.post("/api/info")
-@limiter.limit("20/minute")
+@limiter.limit("300/minute")
 async def get_media_info(payload: InfoRequest, request: Request):
     raw_url = payload.url.strip()
     if not raw_url or not (raw_url.startswith("http://") or raw_url.startswith("https://")):
@@ -87,12 +123,17 @@ async def get_media_info(payload: InfoRequest, request: Request):
             detail="Invalid URL format. Please provide a valid http or https link."
         )
 
-    # Check cache
+    norm_url = normalize_url(raw_url)
+
+    # Check cache with normalized and raw URL
+    if norm_url in info_cache:
+        return {"data": info_cache[norm_url], "cached": True}
     if raw_url in info_cache:
         return {"data": info_cache[raw_url], "cached": True}
 
     try:
         data = await extract_media_info(raw_url)
+        info_cache[norm_url] = data
         info_cache[raw_url] = data
         return {"data": data, "cached": False}
     except ValueError as ve:
@@ -187,11 +228,7 @@ async def stream_download(
     download_id = str(uuid.uuid4())[:8]
     is_audio = quality.lower() == "mp3" or safe_filename.endswith(".mp3")
     
-    clean_url = url.strip()
-    if "youtube.com/watch" in clean_url and "v=" in clean_url:
-        vid_match = re.search(r'[?&]v=([a-zA-Z0-9_-]+)', clean_url)
-        if vid_match:
-            clean_url = f"https://www.youtube.com/watch?v={vid_match.group(1)}"
+    clean_url = normalize_url(url.strip())
 
     cookie_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies.txt")
     has_cookies = os.path.exists(cookie_path)
@@ -200,7 +237,7 @@ async def stream_download(
 
     common_extractor_args = {
         'youtube': {
-            'player_client': ['web_embedded', 'android', 'ios'],
+            'player_client': ['android', 'ios', 'web'],
         }
     }
 
@@ -208,7 +245,9 @@ async def stream_download(
         'quiet': True,
         'no_warnings': True,
         'noplaylist': True,
-        'socket_timeout': 45,
+        'socket_timeout': 60,
+        'concurrent_fragment_downloads': 8,
+        'buffersize': 1024 * 1024,
         'extractor_args': common_extractor_args,
     }
     if has_deno:

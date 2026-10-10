@@ -33,26 +33,13 @@ export async function downloadMediaFile(
   let targetDownloadUrl = url;
   if (url.startsWith('/api/download')) {
     targetDownloadUrl = `${BACKEND_URL}${url}`;
+  } else if (!url.startsWith(BACKEND_URL) && !url.startsWith('blob:')) {
+    targetDownloadUrl = `${BACKEND_URL}/api/download?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename)}`;
   }
 
   if (onProgress) onProgress(50);
 
-  // 1. Trigger via hidden iframe (100% bypasses Chrome popup blocker & opens Downloads tray)
-  try {
-    const iframe = document.createElement('iframe');
-    iframe.style.display = 'none';
-    iframe.src = targetDownloadUrl;
-    document.body.appendChild(iframe);
-    setTimeout(() => {
-      try {
-        document.body.removeChild(iframe);
-      } catch {}
-    }, 45000);
-  } catch (frameErr) {
-    console.warn('Iframe download trigger error:', frameErr);
-  }
-
-  // 2. Also trigger direct anchor download without target=_blank
+  // Trigger direct browser download into downloads folder
   try {
     const link = document.createElement('a');
     link.href = targetDownloadUrl;
@@ -64,9 +51,20 @@ export async function downloadMediaFile(
       try {
         document.body.removeChild(link);
       } catch {}
-    }, 2000);
+    }, 3000);
   } catch (linkErr) {
-    console.warn('Anchor download trigger error:', linkErr);
+    console.warn('Anchor download trigger error, trying iframe fallback:', linkErr);
+    try {
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = targetDownloadUrl;
+      document.body.appendChild(iframe);
+      setTimeout(() => {
+        try {
+          document.body.removeChild(iframe);
+        } catch {}
+      }, 45000);
+    } catch {}
   }
 
   if (onProgress) onProgress(100);

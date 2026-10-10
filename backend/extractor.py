@@ -495,11 +495,11 @@ async def extract_media_info(url: str) -> Dict[str, Any]:
                         size_str = "HD Quality"
 
                 # Direct stream CDN URL for instant downloads, or fallback to backend merger
+                import urllib.parse
                 if direct_cdn_url:
-                    import urllib.parse
                     dl_url = f"/api/download?url={urllib.parse.quote(direct_cdn_url)}&filename=DownBoss_{video_id}_{q_arg}.mp4"
                 else:
-                    dl_url = f"/api/download?url={raw_url}&quality={q_arg}&filename=DownBoss_{video_id}_{q_arg}.mp4"
+                    dl_url = f"/api/download?url={urllib.parse.quote(raw_url)}&quality={q_arg}&filename=DownBoss_{video_id}_{q_arg}.mp4"
 
                 fmt_data = {
                     "quality": name,
@@ -514,12 +514,12 @@ async def extract_media_info(url: str) -> Dict[str, Any]:
 
         # Fallback if no specific tiers matched
         if not dynamic_formats:
+            import urllib.parse
             direct_fallback_url = info_dict.get('url') if platform != 'youtube' else None
             if direct_fallback_url:
-                import urllib.parse
                 fallback_dl = f"/api/download?url={urllib.parse.quote(direct_fallback_url)}&filename=DownBoss_{video_id}_best.mp4"
             else:
-                fallback_dl = f"/api/download?url={raw_url}&quality=best&filename=DownBoss_{video_id}_best.mp4"
+                fallback_dl = f"/api/download?url={urllib.parse.quote(raw_url)}&quality=best&filename=DownBoss_{video_id}_best.mp4"
 
             fallback_fmt = {
                 "quality": "Best HD Video",
@@ -550,7 +550,8 @@ async def extract_media_info(url: str) -> Dict[str, Any]:
             elif not audio_size:
                 audio_size = "~ 4 MB"
 
-            audio_dl_url = f"/api/download?url={raw_url}&quality=mp3&filename=DownBoss_{video_id}.mp3"
+            import urllib.parse
+            audio_dl_url = f"/api/download?url={urllib.parse.quote(raw_url)}&quality=mp3&filename=DownBoss_{video_id}.mp3"
             audio_fmt = {
                 "quality": "MP3 Audio",
                 "res": "MP3",
