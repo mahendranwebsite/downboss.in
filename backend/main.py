@@ -251,10 +251,8 @@ async def stream_download(
         'extractor_args': common_extractor_args,
     }
     if has_deno:
-        base_ydl_opts['remote_components'] = ['ejs:github']
         base_ydl_opts['js_engine'] = 'deno'
     elif has_node:
-        base_ydl_opts['remote_components'] = ['ejs:github']
         base_ydl_opts['js_engine'] = 'node'
 
     if is_audio:

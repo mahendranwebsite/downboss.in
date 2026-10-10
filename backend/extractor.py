@@ -248,14 +248,12 @@ async def extract_media_info(url: str) -> Dict[str, Any]:
     has_deno = shutil.which("deno") is not None
     has_node = shutil.which("node") is not None
     if has_deno:
-        ydl_opts['remote_components'] = ['ejs:github']
         ydl_opts['js_engine'] = 'deno'
     elif has_node:
-        ydl_opts['remote_components'] = ['ejs:github']
         ydl_opts['js_engine'] = 'node'
     ydl_opts['extractor_args'] = {
         'youtube': {
-            'player_client': ['web_embedded', 'android', 'ios'],
+            'player_client': ['android', 'ios', 'web'],
         }
     }
     if os.path.exists(cookie_path):
