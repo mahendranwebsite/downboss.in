@@ -2,11 +2,13 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies including ffmpeg and nodejs for yt-dlp conversions and JS solving
+# Install system dependencies including ffmpeg, curl, unzip, and deno for yt-dlp JS challenge solving
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     curl \
+    unzip \
     nodejs \
+    && curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
