@@ -172,7 +172,7 @@ export const PlatformTabs: React.FC<PlatformTabsProps> = ({ selectedPlatform, on
           >
             <OfficialLogo id="youtube" className="w-3.5 h-3.5 flex-shrink-0" />
             <span>YouTube</span>
-            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-red-500/15 text-red-500 border border-red-500/30">
+            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-red-500/15 text-red-500 border border-red-500/30">
               Coming Soon
             </span>
           </button>

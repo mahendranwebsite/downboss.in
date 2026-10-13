@@ -28,6 +28,7 @@ temp_downloads/
 *.mp3
 *.part
 *.ytdl
+test_*.py
 
 # Environment variables & secrets
 .env
