@@ -8,6 +8,7 @@ export interface PlatformConfig {
   badgeBg: string;
   placeholder: string;
   domainKeywords: string[];
+  isComingSoon?: boolean;
 }
 
 export const PLATFORMS: PlatformConfig[] = [
@@ -53,8 +54,9 @@ export const PLATFORMS: PlatformConfig[] = [
     iconName: 'Youtube',
     colorClass: 'text-red-500',
     badgeBg: 'bg-red-600',
-    placeholder: 'Paste YouTube Video or Shorts link (e.g. youtube.com/shorts/...)',
-    domainKeywords: ['youtube.com', 'youtu.be']
+    placeholder: 'YouTube downloader is Coming Soon! Try Instagram, TikTok, Facebook, or Twitter...',
+    domainKeywords: ['youtube.com', 'youtu.be'],
+    isComingSoon: true
   },
   {
     id: 'tiktok',
@@ -125,9 +127,9 @@ export const SAMPLE_LINKS = [
     badgeClass: 'bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400'
   },
   {
-    label: 'YouTube Short',
-    url: 'https://youtube.com/shorts/sample_short_video',
-    badgeClass: 'bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400'
+    label: 'TikTok Video',
+    url: 'https://www.tiktok.com/@sample_traveler/video/7391234567890123456',
+    badgeClass: 'bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-400'
   }
 ];
 

@@ -254,7 +254,8 @@ async def extract_media_info(url: str) -> Dict[str, Any]:
     pot_server = os.environ.get("YTDLP_POT_SERVER", "http://127.0.0.1:4416")
     ydl_opts['extractor_args'] = {
         'youtube': {
-            'player_client': ['web', 'mweb', 'android', 'ios'],
+            'player_client': ['tv', 'ios', 'android', 'mweb', 'web'],
+            'player_skip': ['webpage', 'configs'],
         },
         'youtubepot-bgutilhttp': {
             'base_url': [pot_server],

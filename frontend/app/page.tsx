@@ -49,6 +49,13 @@ export default function HomePage() {
   };
 
   const handleStartFetch = async (inputUrl: string) => {
+    const lower = inputUrl.toLowerCase();
+    if (lower.includes('youtube.com') || lower.includes('youtu.be')) {
+      setFetchError('YouTube downloader is currently paused (Coming Soon). Please use Instagram, TikTok, Facebook, or Twitter links.');
+      showToast('YouTube downloader is Coming Soon');
+      return;
+    }
+
     setIsLoading(true);
     setMediaData(null);
     setFetchError(null);

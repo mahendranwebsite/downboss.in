@@ -123,6 +123,13 @@ async def get_media_info(payload: InfoRequest, request: Request):
             detail="Invalid URL format. Please provide a valid http or https link."
         )
 
+    raw_lower = raw_url.lower()
+    if "youtube.com" in raw_lower or "youtu.be" in raw_lower:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="YouTube downloads are currently unavailable (Coming Soon). Please use Instagram, TikTok, Facebook, or Twitter."
+        )
+
     norm_url = normalize_url(raw_url)
 
     # Check cache with normalized and raw URL
@@ -161,6 +168,11 @@ async def stream_download(
     import re
     import shutil
     url_lower = url.lower()
+    if "youtube.com" in url_lower or "youtu.be" in url_lower:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="YouTube downloads are currently unavailable (Coming Soon). Please use Instagram, TikTok, Facebook, or Twitter."
+        )
     is_direct_file = (
         bool(re.search(r'\.(?:mp4|mp3|m4a|webm|jpg|jpeg|png|webp)(?:[?&#]|$)', url_lower)) or
         "cdninstagram.com" in url_lower or
@@ -238,7 +250,8 @@ async def stream_download(
     pot_server = os.environ.get("YTDLP_POT_SERVER", "http://127.0.0.1:4416")
     common_extractor_args = {
         'youtube': {
-            'player_client': ['web', 'mweb', 'android', 'ios'],
+            'player_client': ['tv', 'ios', 'android', 'mweb', 'web'],
+            'player_skip': ['webpage', 'configs'],
         },
         'youtubepot-bgutilhttp': {
             'base_url': [pot_server],

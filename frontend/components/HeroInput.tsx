@@ -39,6 +39,10 @@ export const HeroInput: React.FC<HeroInputProps> = ({
     setInternalError(null);
     if (onClearError) onClearError();
     if (val.trim()) {
+      const lower = val.toLowerCase();
+      if (lower.includes('youtube.com') || lower.includes('youtu.be')) {
+        setInternalError('YouTube downloader is currently unavailable (Coming Soon). Please use Instagram, TikTok, Facebook, or X/Twitter.');
+      }
       const detected = detectPlatformFromUrl(val);
       if (detected !== 'all') {
         onPlatformDetected(detected);
@@ -69,6 +73,12 @@ export const HeroInput: React.FC<HeroInputProps> = ({
     }
     if (!clean.startsWith('http://') && !clean.startsWith('https://')) {
       setInternalError('Please include "https://" in your URL.');
+      return;
+    }
+    const lower = clean.toLowerCase();
+    if (lower.includes('youtube.com') || lower.includes('youtu.be')) {
+      setInternalError('YouTube downloader is currently paused (Coming Soon). Please try Instagram, TikTok, Facebook, or Twitter links.');
+      onShowToast('YouTube downloader is Coming Soon');
       return;
     }
     setInternalError(null);
