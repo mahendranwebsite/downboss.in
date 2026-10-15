@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SAMPLE_MEDIA_MOCK } from '@/lib/mockData';
 
-export const maxDuration = 60; // Allow up to 60s for media analysis
 
 const BACKEND_URL = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://api.downboss.in';
 
