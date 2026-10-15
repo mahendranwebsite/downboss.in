@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 interface AdPlaceholderProps {
-  slot: 'top-banner' | 'below-result' | 'sidebar' | 'footer-banner';
+  slot: 'top-banner' | 'below-result' | 'sidebar' | 'footer-banner' | 'side-left' | 'side-right';
   className?: string;
 }
 
@@ -13,21 +13,28 @@ export const AdPlaceholder: React.FC<AdPlaceholderProps> = ({ slot, className = 
   const [scale, setScale] = useState<number>(1);
   const [isClient, setIsClient] = useState(false);
 
+  const isSquareAd = slot === 'sidebar' || slot === 'side-left' || slot === 'side-right';
+  const baseWidth = isSquareAd ? 300 : 728;
+  const baseHeight = isSquareAd ? 250 : 90;
+  const adKey = isSquareAd ? '6efd0b9ccd963175e1d9f0ab518d77b8' : '9b10bd4b0cf922ba57495bf09f23da3b';
+  const scriptUrl = isSquareAd
+    ? 'https://bellnewyork.org/22/6efd0b9ccd963175e1d9f0ab518d77b8'
+    : 'https://bellnewyork.org/22/9b10bd4b0cf922ba57495bf09f23da3b';
+
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Dynamically calculate scale factor for mobile devices
+  // Dynamically calculate scale factor for responsive display
   useEffect(() => {
     if (!isClient) return;
 
     const computeScale = () => {
       if (wrapperRef.current) {
-        // Measure the container width (subtract small padding so it never touches screen edges)
         const availableWidth = wrapperRef.current.clientWidth || window.innerWidth;
-        const targetWidth = Math.min(availableWidth - 8, 728);
-        if (targetWidth < 728 && targetWidth > 0) {
-          setScale(targetWidth / 728);
+        const targetWidth = Math.min(availableWidth - 8, baseWidth);
+        if (targetWidth < baseWidth && targetWidth > 0) {
+          setScale(targetWidth / baseWidth);
         } else {
           setScale(1);
         }
@@ -37,18 +44,17 @@ export const AdPlaceholder: React.FC<AdPlaceholderProps> = ({ slot, className = 
     computeScale();
     window.addEventListener('resize', computeScale);
     return () => window.removeEventListener('resize', computeScale);
-  }, [isClient]);
+  }, [isClient, baseWidth]);
 
   // Inject the ad iframe inside isolated context
   useEffect(() => {
     if (!isClient || !containerRef.current) return;
 
-    // Reset container on mount or slot change
     containerRef.current.innerHTML = '';
 
     const iframe = document.createElement('iframe');
-    iframe.width = '728';
-    iframe.height = '90';
+    iframe.width = `${baseWidth}`;
+    iframe.height = `${baseHeight}`;
     iframe.style.border = 'none';
     iframe.style.overflow = 'hidden';
     iframe.scrolling = 'no';
@@ -74,28 +80,28 @@ export const AdPlaceholder: React.FC<AdPlaceholderProps> = ({ slot, className = 
 <body>
   <script type="text/javascript">
     atOptions = {
-      'key' : '9b10bd4b0cf922ba57495bf09f23da3b',
+      'key' : '${adKey}',
       'format' : 'iframe',
-      'height' : 90,
-      'width' : 728,
+      'height' : ${baseHeight},
+      'width' : ${baseWidth},
       'params' : {}
     };
   <\/script>
-  <script type="text/javascript" src="https://bellnewyork.org/22/9b10bd4b0cf922ba57495bf09f23da3b"><\/script>
+  <script type="text/javascript" src="${scriptUrl}"><\/script>
 </body>
 </html>`;
 
     iframe.srcdoc = adHtml;
     containerRef.current.appendChild(iframe);
-  }, [isClient, slot]);
+  }, [isClient, slot, baseWidth, baseHeight, adKey, scriptUrl]);
 
-  const scaledWidth = Math.round(728 * scale);
-  const scaledHeight = Math.round(90 * scale);
+  const scaledWidth = Math.round(baseWidth * scale);
+  const scaledHeight = Math.round(baseHeight * scale);
 
   return (
     <div
       ref={wrapperRef}
-      className={`w-full max-w-full overflow-hidden flex flex-col items-center justify-center text-center my-2.5 transition-all ${className}`}
+      className={`w-full max-w-full overflow-hidden flex flex-col items-center justify-center text-center my-2 transition-all ${className}`}
       data-ad-slot={slot}
     >
       <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 dark:text-gray-500 mb-1">
@@ -111,8 +117,8 @@ export const AdPlaceholder: React.FC<AdPlaceholderProps> = ({ slot, className = 
         <div
           ref={containerRef}
           style={{
-            width: 728,
-            height: 90,
+            width: baseWidth,
+            height: baseHeight,
             transform: `scale(${scale})`,
             transformOrigin: 'top left',
             position: 'absolute',

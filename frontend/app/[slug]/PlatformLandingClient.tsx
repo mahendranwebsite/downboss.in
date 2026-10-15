@@ -87,7 +87,14 @@ export default function PlatformLandingClient({ pageData }: Props) {
         onShowToast={showToast}
       />
 
-      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12 flex flex-col gap-8">
+      {/* 3-Column Layout with Left and Right Ad Rails */}
+      <div className="relative w-full max-w-[1640px] mx-auto flex justify-center items-start px-2 sm:px-4">
+        {/* Left Side Ad (300x250) */}
+        <aside className="hidden xl:flex flex-col items-center sticky top-24 pt-6 w-[300px] flex-shrink-0 mr-3 z-20">
+          <AdPlaceholder slot="side-left" />
+        </aside>
+
+        <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12 flex flex-col gap-8">
         
         {/* SEO Custom Hero */}
         <div className="text-center space-y-3">
@@ -136,8 +143,13 @@ export default function PlatformLandingClient({ pageData }: Props) {
         {/* Below-Result Ad Slot */}
         <AdPlaceholder slot="below-result" />
 
-
       </main>
+
+        {/* Right Side Ad (300x250) */}
+        <aside className="hidden xl:flex flex-col items-center sticky top-24 pt-6 w-[300px] flex-shrink-0 ml-3 z-20">
+          <AdPlaceholder slot="side-right" />
+        </aside>
+      </div>
 
       <Footer />
 

@@ -127,8 +127,15 @@ export default function HomePage() {
         onShowToast={showToast}
       />
 
-      {/* Main Content Container matching reference HTML max-w-4xl */}
-      <main className="relative flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12 flex flex-col gap-8">
+      {/* 3-Column Layout with Left and Right Ad Rails */}
+      <div className="relative w-full max-w-[1640px] mx-auto flex justify-center items-start px-2 sm:px-4">
+        {/* Left Side Ad (300x250) */}
+        <aside className="hidden xl:flex flex-col items-center sticky top-24 pt-6 w-[300px] flex-shrink-0 mr-3 z-20">
+          <AdPlaceholder slot="side-left" />
+        </aside>
+
+        {/* Main Content Container matching reference HTML max-w-4xl */}
+        <main className="relative flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12 flex flex-col gap-8">
         {/* Ambient Animated Glowing Mesh Orbs */}
         <div aria-hidden="true" className="pointer-events-none absolute -top-10 left-1/4 -translate-x-1/2 w-80 h-80 rounded-full bg-gradient-to-tr from-indigo-500/20 to-purple-500/10 dark:from-indigo-600/25 dark:to-purple-600/15 blur-3xl animate-float -z-10" />
         <div aria-hidden="true" className="pointer-events-none absolute top-44 right-10 w-72 h-72 rounded-full bg-gradient-to-bl from-pink-500/20 to-rose-500/10 dark:from-pink-600/20 dark:to-purple-800/15 blur-3xl animate-float-delayed -z-10" />
@@ -186,8 +193,13 @@ export default function HomePage() {
         {/* Below-Result Ad Slot */}
         <AdPlaceholder slot="below-result" />
 
-
       </main>
+
+        {/* Right Side Ad (300x250) */}
+        <aside className="hidden xl:flex flex-col items-center sticky top-24 pt-6 w-[300px] flex-shrink-0 ml-3 z-20">
+          <AdPlaceholder slot="side-right" />
+        </aside>
+      </div>
 
       {/* Footer */}
       <Footer />
