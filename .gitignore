@@ -9,6 +9,7 @@ yarn-error.log*
 out/
 build/
 dist/
+*.tsbuildinfo
 
 # Python virtual environment & cache
 backend/venv/
