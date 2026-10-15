@@ -111,7 +111,7 @@ export default function PlatformLandingClient({ pageData }: Props) {
         />
 
         {/* Top Ad Slot */}
-        <AdPlaceholder slot="top-banner" className="hidden sm:flex" />
+        <AdPlaceholder slot="top-banner" className="flex" />
 
         {/* Input Form Section */}
         <HeroInput

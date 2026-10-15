@@ -159,8 +159,8 @@ export default function HomePage() {
           onSelectPlatform={(id) => setSelectedPlatform(id)}
         />
 
-        {/* Top Ad Slot (Google AdSense Ready) */}
-        <AdPlaceholder slot="top-banner" className="hidden sm:flex" />
+        {/* Top Ad Slot (728x90 Banner) */}
+        <AdPlaceholder slot="top-banner" className="flex" />
 
         {/* Input Form Section */}
         <HeroInput
