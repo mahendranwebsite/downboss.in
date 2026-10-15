@@ -13,7 +13,7 @@ import { Footer } from '@/components/Footer';
 import { SeoLandingPageData } from '@/lib/seoData';
 import { PlatformId, MediaData, HistoryItem } from '@/lib/types';
 import { fetchMediaInfo, getDownloadHistory, clearDownloadHistory } from '@/lib/api';
-import { ChevronDown, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 interface Props {
   pageData: SeoLandingPageData;
@@ -31,7 +31,6 @@ export default function PlatformLandingClient({ pageData }: Props) {
   const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [openFaqIdx, setOpenFaqIdx] = useState<number | null>(0);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -137,54 +136,6 @@ export default function PlatformLandingClient({ pageData }: Props) {
         {/* Below-Result Ad Slot */}
         <AdPlaceholder slot="below-result" />
 
-        {/* Platform Specific Feature Highlights */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {pageData.features.map((f, idx) => (
-            <div
-              key={idx}
-              className="p-5 rounded-2xl bg-white dark:bg-darkCard border border-gray-200 dark:border-gray-800 space-y-1.5 shadow-sm"
-            >
-              <h4 className="font-bold text-sm text-gray-900 dark:text-white">{f.title}</h4>
-              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{f.desc}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Platform Specific FAQ Accordion */}
-        <section className="py-6 space-y-4">
-          <div className="text-center space-y-1">
-            <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900 dark:text-white">
-              {pageData.platformName} Download FAQs
-            </h2>
-          </div>
-          <div className="space-y-3 max-w-3xl mx-auto">
-            {pageData.faqs.map((faq, idx) => {
-              const isOpen = openFaqIdx === idx;
-              return (
-                <div
-                  key={idx}
-                  className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-darkCard overflow-hidden shadow-sm"
-                >
-                  <button
-                    type="button"
-                    onClick={() => setOpenFaqIdx(isOpen ? null : idx)}
-                    className="w-full p-4 text-left flex items-center justify-between gap-4 font-semibold text-sm text-gray-900 dark:text-white"
-                  >
-                    <span>{faq.q}</span>
-                    <ChevronDown
-                      className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180 text-indigo-500' : ''}`}
-                    />
-                  </button>
-                  {isOpen && (
-                    <div className="px-4 pb-4 pt-1 text-xs text-gray-500 dark:text-gray-400 leading-relaxed border-t border-gray-100 dark:border-gray-800/60 animate-fadeIn">
-                      {faq.a}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </section>
 
       </main>
 

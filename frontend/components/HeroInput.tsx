@@ -162,20 +162,6 @@ export const HeroInput: React.FC<HeroInputProps> = ({
         </div>
       )}
 
-      {/* Quick Sample Test Links matching reference HTML */}
-      <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800/60 flex flex-wrap items-center gap-2 text-xs">
-        <span className="text-gray-400 font-medium">Try Sample Links:</span>
-        {SAMPLE_LINKS.map((s, idx) => (
-          <button
-            key={idx}
-            type="button"
-            onClick={() => handleSampleClick(s.url)}
-            className={`sample-link-btn px-2.5 py-1 rounded-md font-medium hover:underline transition-all hover:scale-105 active:scale-95 shadow-sm ${s.badgeClass}`}
-          >
-            {s.label}
-          </button>
-        ))}
-      </div>
     </div>
   );
 };

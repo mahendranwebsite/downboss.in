@@ -5,9 +5,7 @@ import { Navbar } from '@/components/Navbar';
 import { PlatformTabs } from '@/components/PlatformTabs';
 import { HeroInput } from '@/components/HeroInput';
 import { MediaResult } from '@/components/MediaResult';
-import { Features } from '@/components/Features';
-import { HowItWorks } from '@/components/HowItWorks';
-import { FAQ, FAQ_DATA } from '@/components/FAQ';
+import { FAQ_DATA } from '@/components/FAQ';
 import { AdPlaceholder } from '@/components/AdPlaceholder';
 import { BatchModal } from '@/components/BatchModal';
 import { HistoryModal } from '@/components/HistoryModal';
@@ -188,14 +186,6 @@ export default function HomePage() {
         {/* Below-Result Ad Slot */}
         <AdPlaceholder slot="below-result" />
 
-        {/* Feature Highlights & Instructions */}
-        <Features />
-
-        {/* How It Works Section */}
-        <HowItWorks />
-
-        {/* FAQ Accordion Section */}
-        <FAQ />
 
       </main>
 

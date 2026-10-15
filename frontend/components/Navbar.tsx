@@ -74,15 +74,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenBatch, onOpenHistory, onSh
 
         {/* Desktop Navigation Links */}
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600 dark:text-gray-300">
-          <Link href="/" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+          <Link href="/" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors font-semibold">
             Home
           </Link>
-          <a href="#how-it-works" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
-            How it works
-          </a>
-          <a href="#faq" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
-            FAQ
-          </a>
         </nav>
 
         {/* Action Controls */}
