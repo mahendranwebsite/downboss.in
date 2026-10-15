@@ -9,12 +9,37 @@ interface AdPlaceholderProps {
 
 export const AdPlaceholder: React.FC<AdPlaceholderProps> = ({ slot, className = '' }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState<number>(1);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
+  // Dynamically calculate scale factor for mobile devices
+  useEffect(() => {
+    if (!isClient) return;
+
+    const computeScale = () => {
+      if (wrapperRef.current) {
+        // Measure the container width (subtract small padding so it never touches screen edges)
+        const availableWidth = wrapperRef.current.clientWidth || window.innerWidth;
+        const targetWidth = Math.min(availableWidth - 8, 728);
+        if (targetWidth < 728 && targetWidth > 0) {
+          setScale(targetWidth / 728);
+        } else {
+          setScale(1);
+        }
+      }
+    };
+
+    computeScale();
+    window.addEventListener('resize', computeScale);
+    return () => window.removeEventListener('resize', computeScale);
+  }, [isClient]);
+
+  // Inject the ad iframe inside isolated context
   useEffect(() => {
     if (!isClient || !containerRef.current) return;
 
@@ -64,19 +89,36 @@ export const AdPlaceholder: React.FC<AdPlaceholderProps> = ({ slot, className = 
     containerRef.current.appendChild(iframe);
   }, [isClient, slot]);
 
+  const scaledWidth = Math.round(728 * scale);
+  const scaledHeight = Math.round(90 * scale);
+
   return (
     <div
-      className={`w-full flex flex-col items-center justify-center text-center my-3 transition-all ${className}`}
+      ref={wrapperRef}
+      className={`w-full max-w-full overflow-hidden flex flex-col items-center justify-center text-center my-2.5 transition-all ${className}`}
       data-ad-slot={slot}
     >
       <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 dark:text-gray-500 mb-1">
         Advertisement
       </span>
-      <div className="w-full flex justify-center items-center overflow-x-auto scrollbar-none py-1">
+      <div
+        className="relative flex items-center justify-center overflow-hidden max-w-full mx-auto"
+        style={{
+          width: `${scaledWidth}px`,
+          height: `${scaledHeight}px`,
+        }}
+      >
         <div
           ref={containerRef}
-          className="flex justify-center items-center"
-          style={{ minWidth: 728, width: 728, height: 90 }}
+          style={{
+            width: 728,
+            height: 90,
+            transform: `scale(${scale})`,
+            transformOrigin: 'top left',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+          }}
         />
       </div>
     </div>
