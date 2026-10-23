@@ -187,13 +187,24 @@ async def download_media_to_file(clean_url: str, quality: str, is_audio: bool = 
             elif "360" in quality_lower:
                 max_height = 360
 
-            # Prioritize progressive combined streams where available for ultra-fast downloads
-            format_selector = (
-                f'best[height<={max_height}][ext=mp4]/'
-                f'best[height<={max_height}]/'
-                f'bestvideo[height<={max_height}]+bestaudio/'
-                f'best'
-            )
+            # Real High Quality format selection:
+            # 4K (2160p), 2K (1440p), and 1080p require bestvideo + bestaudio merged to prevent falling back to 720p.
+            if max_height <= 720:
+                format_selector = (
+                    f'best[height={max_height}][ext=mp4]/'
+                    f'bestvideo[height<={max_height}][ext=mp4]+bestaudio[ext=m4a]/'
+                    f'bestvideo[height<={max_height}]+bestaudio/'
+                    f'best[height<={max_height}]/'
+                    f'best'
+                )
+            else:
+                format_selector = (
+                    f'bestvideo[height<={max_height}][ext=mp4]+bestaudio[ext=m4a]/'
+                    f'bestvideo[height<={max_height}]+bestaudio/'
+                    f'bestvideo+bestaudio/'
+                    f'best[height<={max_height}]/'
+                    f'best'
+                )
             ydl_opts = {
                 **base_ydl_opts,
                 'outtmpl': temp_out,
