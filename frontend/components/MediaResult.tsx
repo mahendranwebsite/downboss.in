@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { MediaData, MediaFormat } from '../lib/types';
-import { Play, DownloadCloud, Twitter, Instagram, Facebook, Youtube, Music, CheckCircle2, Layers, Zap, ArrowDownToLine, Film, Sparkles } from 'lucide-react';
+import { Play, DownloadCloud, Twitter, Instagram, Facebook, Youtube, Music, CheckCircle2, Layers, Zap, ArrowDownToLine, Film, Sparkles, Loader2, Check } from 'lucide-react';
 import { CarouselGrid } from './CarouselGrid';
 import { downloadMediaFile, saveDownloadToHistory } from '../lib/api';
 import { OfficialLogo } from './PlatformTabs';
@@ -25,6 +25,9 @@ export const MediaResult: React.FC<MediaResultProps> = ({
   const [selectedQuality, setSelectedQuality] = useState<string>('1080p HD');
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [downloadPercent, setDownloadPercent] = useState<number>(0);
+  const [downloadStage, setDownloadStage] = useState<string>('Connecting to media server...');
+  const [downloadSuccess, setDownloadSuccess] = useState<boolean>(false);
+  const [activeDownloadingQuality, setActiveDownloadingQuality] = useState<string | null>(null);
 
   React.useEffect(() => {
     if (mediaData?.formats && mediaData.formats.length > 0) {
@@ -40,41 +43,72 @@ export const MediaResult: React.FC<MediaResultProps> = ({
   const activeFormat = mediaData?.formats?.find(f => f.quality === selectedQuality) || mediaData?.formats?.[0];
 
   const handleDownloadSingle = async (formatOverride?: MediaFormat) => {
-    if (!mediaData) return;
+    if (!mediaData || isDownloading) return;
     const fmt = formatOverride || activeFormat;
     if (formatOverride) {
       setSelectedQuality(formatOverride.quality);
     }
+    const qualityLabel = fmt?.quality || 'HD';
     setIsDownloading(true);
-    setDownloadPercent(15);
+    setDownloadSuccess(false);
+    setActiveDownloadingQuality(qualityLabel);
+    setDownloadPercent(14);
+    setDownloadStage('Initiating high-speed connection...');
 
     const ext = fmt?.ext || 'mp4';
     const authorClean = mediaData.author.replace('@', '').trim() || 'video';
     const filename = `DownBoss_${authorClean}_${fmt?.res || 'hd'}.${ext}`;
     const targetUrl = fmt?.url || mediaData.originalUrl;
 
+    // Smooth incremental progress simulation while the server prepares & delivers the stream
+    let currentPct = 14;
+    const dlTimer = setInterval(() => {
+      currentPct += Math.floor(Math.random() * 12) + 7;
+      if (currentPct >= 95) {
+        currentPct = 95;
+        clearInterval(dlTimer);
+      }
+      setDownloadPercent(currentPct);
+      if (currentPct < 40) {
+        setDownloadStage('Connecting to media stream...');
+      } else if (currentPct < 75) {
+        setDownloadStage(`Packaging ${qualityLabel} & preparing high-speed file...`);
+      } else {
+        setDownloadStage('Transferring stream to your browser...');
+      }
+    }, 240);
+
     try {
-      await downloadMediaFile(targetUrl, filename, (pct) => {
-        setDownloadPercent(pct);
-      });
+      await downloadMediaFile(targetUrl, filename);
+      clearInterval(dlTimer);
+      setDownloadPercent(100);
+      setDownloadStage(`✓ ${qualityLabel} download initiated! Check your downloads.`);
+      setDownloadSuccess(true);
+
       saveDownloadToHistory({
         title: mediaData.title,
         platform: mediaData.type,
-        quality: fmt?.quality || 'HD',
+        quality: qualityLabel,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         date: new Date().toLocaleDateString(),
         url: mediaData.originalUrl
       });
-      onShowToast(`Downloading ${fmt?.quality || 'HD'}! Check your browser downloads.`);
+      onShowToast(`Downloading ${qualityLabel}! Check your browser downloads.`);
+
       setTimeout(() => {
         setIsDownloading(false);
+        setDownloadSuccess(false);
         setDownloadPercent(0);
-      }, 2500);
+        setActiveDownloadingQuality(null);
+      }, 4000);
     } catch (e) {
+      clearInterval(dlTimer);
       console.error(e);
       onShowToast('Download failed. Please try again.');
       setIsDownloading(false);
+      setDownloadSuccess(false);
       setDownloadPercent(0);
+      setActiveDownloadingQuality(null);
     }
   };
 
@@ -290,27 +324,35 @@ export const MediaResult: React.FC<MediaResultProps> = ({
                     {mediaData.formats && mediaData.formats.length > 0 ? (
                       mediaData.formats.map((fmt, idx) => {
                         const isActive = selectedQuality === fmt.quality || (!selectedQuality && idx === 0);
+                        const isCurrentDownloading = isDownloading && activeDownloadingQuality === fmt.quality;
                         return (
                           <button
                             key={idx}
                             type="button"
                             onClick={() => handleSelectAndDownload(fmt)}
+                            disabled={isDownloading}
                             title={`Click to fast download ${fmt.quality}`}
                             className={`group relative quality-btn px-3 py-2.5 rounded-xl border flex flex-col items-center justify-center text-center transition-all ${
-                              isActive
+                              isCurrentDownloading
+                                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-400 ring-2 ring-emerald-500/40 shadow-md scale-[1.02]'
+                                : isActive
                                 ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-400 shadow-md shadow-indigo-500/15 scale-[1.02] ring-2 ring-indigo-500/30'
                                 : 'border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/80 text-gray-700 dark:text-gray-300 hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-gray-800 hover:scale-[1.01]'
                             }`}
                           >
                             <div className="flex items-center gap-1">
                               <span className="font-bold text-xs sm:text-sm">{fmt.quality}</span>
-                              <ArrowDownToLine className="w-3.5 h-3.5 text-emerald-500 opacity-80 group-hover:translate-y-0.5 transition-transform" />
+                              {isCurrentDownloading ? (
+                                <Loader2 className="w-3.5 h-3.5 text-emerald-500 animate-spin" />
+                              ) : (
+                                <ArrowDownToLine className="w-3.5 h-3.5 text-emerald-500 opacity-80 group-hover:translate-y-0.5 transition-transform" />
+                              )}
                             </div>
                             {fmt.size && (
                               <span className="text-[10px] opacity-75 font-normal mt-0.5">{fmt.size}</span>
                             )}
-                            <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 mt-1 uppercase tracking-wider">
-                              ⚡ Fast DL
+                            <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 mt-1 uppercase tracking-wider flex items-center gap-1">
+                              {isCurrentDownloading ? 'Saving...' : '⚡ Fast DL'}
                             </span>
                           </button>
                         );
@@ -318,6 +360,7 @@ export const MediaResult: React.FC<MediaResultProps> = ({
                     ) : (
                       <button
                         onClick={() => handleDownloadSingle()}
+                        disabled={isDownloading}
                         className="quality-btn active col-span-2 px-4 py-2.5 rounded-xl border border-indigo-600 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 text-xs font-bold flex items-center justify-center text-center"
                       >
                         <span>⚡ Original HD Video (Fast DL)</span>
@@ -325,6 +368,60 @@ export const MediaResult: React.FC<MediaResultProps> = ({
                     )}
                   </div>
                 </div>
+
+                {/* Active File Download Loading Card */}
+                {isDownloading && (
+                  <div className="p-4 rounded-2xl border border-emerald-500/40 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-emerald-500/10 dark:from-emerald-950/50 dark:via-gray-900/60 dark:to-emerald-950/40 flex flex-col gap-3 animate-fadeIn shadow-xl shadow-emerald-500/10">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="relative flex items-center justify-center w-11 h-11 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex-shrink-0 shadow-sm">
+                          {downloadSuccess ? (
+                            <Check className="w-6 h-6 text-emerald-500 animate-bounce" />
+                          ) : (
+                            <Loader2 className="w-6 h-6 text-emerald-500 animate-spin" />
+                          )}
+                        </div>
+                        <div>
+                          <h5 className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2 flex-wrap">
+                            <span>{downloadSuccess ? 'File Download Started!' : 'Sending File to Your Browser...'}</span>
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                              {activeDownloadingQuality}
+                            </span>
+                          </h5>
+                          <p className="text-[11px] sm:text-xs text-emerald-700 dark:text-emerald-300 mt-0.5 font-medium flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                            {downloadStage}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <span className="font-mono text-base sm:text-lg font-extrabold text-emerald-600 dark:text-emerald-400">
+                          {downloadPercent}%
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar with Moving Shimmer */}
+                    <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-3 overflow-hidden shadow-inner p-0.5 border border-emerald-500/30">
+                      <div
+                        className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 via-cyan-400 to-emerald-500 rounded-full transition-all duration-300 relative overflow-hidden shadow-md shadow-emerald-500/40"
+                        style={{ width: `${Math.max(downloadPercent, 10)}%` }}
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent animate-shimmer" style={{ backgroundSize: '200% 100%' }}></div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400 pt-0.5">
+                      <span className="truncate max-w-[220px] sm:max-w-xs font-medium">
+                        📁 {mediaData.title}
+                      </span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1 flex-shrink-0">
+                        <DownloadCloud className="w-3.5 h-3.5 animate-bounce" />
+                        Check Browser Downloads ⬇
+                      </span>
+                    </div>
+                  </div>
+                )}
 
                 {/* Primary Fast Download Button */}
                 <div className="pt-2 flex flex-col gap-2.5">
@@ -334,21 +431,19 @@ export const MediaResult: React.FC<MediaResultProps> = ({
                     disabled={isDownloading}
                     className="btn-shimmer relative overflow-hidden flex-1 py-3.5 sm:py-4 px-6 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl text-sm sm:text-base shadow-xl shadow-emerald-600/25 hover:shadow-emerald-600/40 flex items-center justify-center gap-2.5 active:scale-[0.98] hover:scale-[1.01] transition-all disabled:opacity-90 cursor-pointer"
                   >
-                    <DownloadCloud className={`w-5 h-5 ${isDownloading ? 'animate-bounce text-white' : ''}`} />
+                    {isDownloading ? (
+                      <Loader2 className="w-5 h-5 text-white animate-spin" />
+                    ) : (
+                      <DownloadCloud className="w-5 h-5 text-white" />
+                    )}
                     <span>
                       {isDownloading
-                        ? 'Starting High-Speed Download... ⬇'
+                        ? (downloadSuccess
+                            ? '✓ Download Started! Check Downloads ⬇'
+                            : `Downloading ${activeDownloadingQuality || 'HD'} (${downloadPercent}%)... ⬇`)
                         : `⚡ Fast Download (${activeFormat?.quality || 'HD'})`}
                     </span>
                   </button>
-                  {isDownloading && (
-                    <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2.5 overflow-hidden">
-                      <div
-                        className="bg-emerald-500 h-2.5 rounded-full transition-all duration-300 ease-out shadow-sm shadow-emerald-500/50"
-                        style={{ width: `${Math.max(downloadPercent, 10)}%` }}
-                      />
-                    </div>
-                  )}
                   <p className="text-[11px] text-center text-gray-500 dark:text-gray-400">
                     💡 Click any format above or the Fast Download button to start your instant download.
                   </p>
