@@ -47,49 +47,47 @@ export default function HomePage() {
   };
 
   const handleStartFetch = async (inputUrl: string) => {
-    const lower = inputUrl.toLowerCase();
-    if (lower.includes('youtube.com') || lower.includes('youtu.be')) {
-      setFetchError('YouTube downloader is currently paused (Coming Soon). Please use Instagram, TikTok, Facebook, or Twitter links.');
-      showToast('YouTube downloader is Coming Soon');
-      return;
-    }
-
     setIsLoading(true);
     setMediaData(null);
     setFetchError(null);
     setProgressPercent(15);
-    setProgressStatus('');
+    setProgressStatus('Connecting to media stream...');
 
-    // Smooth progress animation
-    const timer1 = setTimeout(() => {
-      setProgressPercent(45);
-    }, 250);
+    // Smooth incremental progress ticker with dynamic status messages
+    let currentPct = 15;
+    const progressInterval = setInterval(() => {
+      currentPct += Math.floor(Math.random() * 8) + 4;
+      if (currentPct > 92) {
+        currentPct = 92;
+        clearInterval(progressInterval);
+      }
+      setProgressPercent(currentPct);
 
-    const timer2 = setTimeout(() => {
-      setProgressPercent(75);
-    }, 550);
-
-    const timer3 = setTimeout(() => {
-      setProgressPercent(90);
-    }, 850);
+      if (currentPct < 35) {
+        setProgressStatus('Connecting to media servers...');
+      } else if (currentPct < 65) {
+        setProgressStatus('Extracting highest video & audio resolutions...');
+      } else if (currentPct < 85) {
+        setProgressStatus('Bypassing restrictions & generating direct links...');
+      } else {
+        setProgressStatus('Preparing instant download options...');
+      }
+    }, 280);
 
     try {
       const data = await fetchMediaInfo(inputUrl);
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      clearTimeout(timer3);
+      clearInterval(progressInterval);
 
       setProgressPercent(100);
+      setProgressStatus('Download options ready!');
 
       setTimeout(() => {
         setMediaData(data);
         setIsLoading(false);
         showToast('Media loaded successfully!');
-      }, 300);
+      }, 250);
     } catch (err: any) {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      clearTimeout(timer3);
+      clearInterval(progressInterval);
       setIsLoading(false);
       const message = err?.message || 'Could not extract media. Please check URL.';
       setFetchError(message);

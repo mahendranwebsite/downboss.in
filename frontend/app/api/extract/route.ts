@@ -24,13 +24,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const urlLower = url.toLowerCase();
-    if (urlLower.includes('youtube.com') || urlLower.includes('youtu.be')) {
-      return NextResponse.json(
-        { error: 'YouTube downloader is temporarily unavailable (Coming Soon). Please use Instagram, TikTok, Facebook, or X/Twitter.' },
-        { status: 400 }
-      );
-    }
     const isExplicitSample = KNOWN_SAMPLE_URLS.some((s) => urlLower.includes(s));
 
     // Try communicating with the Python FastAPI backend

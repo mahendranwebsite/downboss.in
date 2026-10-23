@@ -108,15 +108,14 @@ interface PlatformTabsProps {
 }
 
 export const PlatformTabs: React.FC<PlatformTabsProps> = ({ selectedPlatform, onSelectPlatform }) => {
-  // Main top tabs (active platforms: All, Twitter, Instagram, Facebook)
-  const mainPlatforms = PLATFORMS.filter(p => ['all', 'twitter', 'instagram', 'facebook'].includes(p.id));
-  const morePlatforms = PLATFORMS.filter(p => !['all', 'twitter', 'instagram', 'facebook', 'youtube'].includes(p.id));
-  const youtubePlatform = PLATFORMS.find(p => p.id === 'youtube');
+  // Main top tabs (active platforms: All, YouTube, Instagram, Facebook, Twitter)
+  const mainPlatforms = PLATFORMS.filter(p => ['all', 'youtube', 'instagram', 'facebook', 'twitter'].includes(p.id));
+  const morePlatforms = PLATFORMS.filter(p => !['all', 'youtube', 'instagram', 'facebook', 'twitter'].includes(p.id));
 
   return (
     <div className="flex flex-col items-center gap-3 w-full">
       {/* Primary Tabs with Official Brand Logos */}
-      <div className="flex justify-center items-center gap-1 sm:gap-2 p-1.5 bg-gray-100 dark:bg-darkCard rounded-2xl border border-gray-200 dark:border-gray-800 max-w-lg mx-auto w-full transition-colors overflow-x-auto scrollbar-none">
+      <div className="flex justify-center items-center gap-1 sm:gap-2 p-1.5 bg-gray-100 dark:bg-darkCard rounded-2xl border border-gray-200 dark:border-gray-800 max-w-xl mx-auto w-full transition-colors overflow-x-auto scrollbar-none">
         {mainPlatforms.map((platform) => {
           const isActive = selectedPlatform === platform.id;
           return (
@@ -137,7 +136,7 @@ export const PlatformTabs: React.FC<PlatformTabsProps> = ({ selectedPlatform, on
         })}
       </div>
 
-      {/* Secondary Chips with Official Logos & YouTube Coming Soon */}
+      {/* Secondary Chips with Official Logos */}
       <div className="flex flex-wrap items-center justify-center gap-1.5 max-w-2xl mx-auto px-2">
         <span className="text-[11px] font-medium text-gray-400 mr-1 hidden sm:inline">Also supports:</span>
         {morePlatforms.map((platform) => {
@@ -157,26 +156,6 @@ export const PlatformTabs: React.FC<PlatformTabsProps> = ({ selectedPlatform, on
             </button>
           );
         })}
-
-        {/* YouTube Coming Soon Chip in the Bottom Row */}
-        {youtubePlatform && (
-          <button
-            key="youtube"
-            onClick={() => onSelectPlatform('youtube')}
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all border ${
-              selectedPlatform === 'youtube'
-                ? 'bg-red-500/10 text-red-500 border-red-500/40 shadow-sm'
-                : 'bg-gray-100/70 dark:bg-gray-800/60 border-red-500/20 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
-            }`}
-            title="YouTube downloader is coming soon"
-          >
-            <OfficialLogo id="youtube" className="w-3.5 h-3.5 flex-shrink-0" />
-            <span>YouTube</span>
-            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-red-500/15 text-red-500 border border-red-500/30">
-              Coming Soon
-            </span>
-          </button>
-        )}
       </div>
     </div>
   );

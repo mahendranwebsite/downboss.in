@@ -251,16 +251,17 @@ async def extract_media_info(url: str) -> Dict[str, Any]:
         ydl_opts['js_engine'] = 'deno'
     elif has_node:
         ydl_opts['js_engine'] = 'node'
-    pot_server = os.environ.get("YTDLP_POT_SERVER", "http://127.0.0.1:4416")
-    ydl_opts['extractor_args'] = {
-        'youtube': {
-            'player_client': ['tv', 'ios', 'android', 'mweb', 'web'],
-            'player_skip': ['webpage', 'configs'],
-        },
-        'youtubepot-bgutilhttp': {
-            'base_url': [pot_server],
+    if platform == "youtube" or "youtube.com" in url_lower or "youtu.be" in url_lower:
+        pot_server = os.environ.get("YTDLP_POT_SERVER", "http://pot-provider:4416")
+        ydl_opts['extractor_args'] = {
+            'youtube': {
+                'player_client': ['tv', 'ios', 'android', 'mweb', 'web'],
+                'player_skip': ['webpage', 'configs'],
+            },
+            'youtubepot-bgutilhttp': {
+                'base_url': [pot_server],
+            }
         }
-    }
     if os.path.exists(cookie_path):
         ydl_opts['cookiefile'] = cookie_path
 

@@ -54,9 +54,9 @@ export const PLATFORMS: PlatformConfig[] = [
     iconName: 'Youtube',
     colorClass: 'text-red-500',
     badgeBg: 'bg-red-600',
-    placeholder: 'YouTube downloader is Coming Soon! Try Instagram, TikTok, Facebook, or Twitter...',
+    placeholder: 'Paste YouTube video or Shorts link (e.g. youtube.com/watch?v=...)',
     domainKeywords: ['youtube.com', 'youtu.be'],
-    isComingSoon: true
+    isComingSoon: false
   },
   {
     id: 'tiktok',
