@@ -23,6 +23,7 @@ services:
       - pot-provider
     volumes:
       - backend-temp:/app/temp_downloads
+      - ./backend/cookies.txt:/app/cookies.txt:ro
 
   frontend:
     build:

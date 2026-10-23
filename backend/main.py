@@ -3,11 +3,13 @@ import asyncio
 import time
 import uuid
 import glob
+import re
+import shutil
+import hashlib
 from typing import Dict, Any, Optional
 from fastapi import FastAPI, HTTPException, Request, Response, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, FileResponse, JSONResponse
-from starlette.background import BackgroundTask
 from pydantic import BaseModel
 import httpx
 import yt_dlp
@@ -65,12 +67,26 @@ if cookie_env:
     except Exception as e:
         print(f"Failed to write YTDL_COOKIES: {e}")
 
-def cleanup_file(path: str):
+# In-flight active download tasks registry for concurrency deduping
+ACTIVE_DOWNLOADS: Dict[str, asyncio.Task] = {}
+
+def get_cache_filename(clean_url: str, quality: str, is_audio: bool) -> str:
+    h = hashlib.sha256(clean_url.encode('utf-8')).hexdigest()[:16]
+    ext = "mp3" if is_audio else "mp4"
+    return f"{h}_{quality.lower()}.{ext}"
+
+def cleanup_old_files():
+    """Removes cached download files older than 3 hours."""
     try:
-        if os.path.exists(path):
-            os.remove(path)
+        now = time.time()
+        for f in glob.glob(os.path.join(TEMP_DIR, "*")):
+            try:
+                if os.path.isfile(f) and (now - os.path.getmtime(f) > 10800):
+                    os.remove(f)
+            except Exception:
+                pass
     except Exception as e:
-        print(f"Cleanup error for {path}: {e}")
+        print(f"Periodic cleanup error: {e}")
 
 def normalize_url(url: str) -> str:
     try:
@@ -96,6 +112,137 @@ def normalize_url(url: str) -> str:
     except Exception:
         pass
     return url.strip()
+
+async def download_media_to_file(clean_url: str, quality: str, is_audio: bool = False) -> str:
+    """High-speed download engine with disk caching and in-flight deduplication."""
+    quality_lower = quality.lower()
+    cache_fn = get_cache_filename(clean_url, quality_lower, is_audio)
+    target_cached_file = os.path.join(TEMP_DIR, cache_fn)
+
+    # 1. Instant cache hit
+    if os.path.exists(target_cached_file) and os.path.getsize(target_cached_file) > 1024:
+        return target_cached_file
+
+    # 2. Check if already downloading in background
+    task_key = f"{clean_url}_{quality_lower}_{is_audio}"
+    if task_key in ACTIVE_DOWNLOADS and not ACTIVE_DOWNLOADS[task_key].done():
+        return await ACTIVE_DOWNLOADS[task_key]
+
+    # 3. Create execution task
+    async def _do_download() -> str:
+        cookie_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies.txt")
+        has_cookies = os.path.exists(cookie_path)
+        has_deno = shutil.which("deno") is not None
+        has_node = shutil.which("node") is not None
+
+        pot_server = os.environ.get("YTDLP_POT_SERVER", "http://pot-provider:4416")
+        common_extractor_args = {
+            'youtubepot-bgutilhttp': {
+                'base_url': [pot_server],
+            }
+        }
+
+        base_ydl_opts: Dict[str, Any] = {
+            'quiet': True,
+            'no_warnings': True,
+            'noplaylist': True,
+            'socket_timeout': 60,
+            'concurrent_fragment_downloads': 16,
+            'buffersize': 16 * 1024 * 1024,
+            'http_chunk_size': 10 * 1024 * 1024,
+            'remote_components': ['ejs:github'],
+            'extractor_args': common_extractor_args,
+        }
+        if has_deno:
+            base_ydl_opts['js_engine'] = 'deno'
+        elif has_node:
+            base_ydl_opts['js_engine'] = 'node'
+
+        temp_prefix = f"wip_{uuid.uuid4().hex[:8]}_{cache_fn.split('.')[0]}"
+        temp_out = os.path.join(TEMP_DIR, f"{temp_prefix}.%(ext)s")
+
+        if is_audio:
+            ydl_opts = {
+                **base_ydl_opts,
+                'outtmpl': temp_out,
+                'format': 'bestaudio/best',
+                'postprocessors': [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': '192',
+                }],
+            }
+        else:
+            max_height = 1080
+            if "4k" in quality_lower or "2160" in quality_lower:
+                max_height = 2160
+            elif "2k" in quality_lower or "1440" in quality_lower:
+                max_height = 1440
+            elif "1080" in quality_lower:
+                max_height = 1080
+            elif "720" in quality_lower:
+                max_height = 720
+            elif "480" in quality_lower:
+                max_height = 480
+            elif "360" in quality_lower:
+                max_height = 360
+
+            # Prioritize progressive combined streams where available for ultra-fast downloads
+            format_selector = (
+                f'best[height<={max_height}][ext=mp4]/'
+                f'best[height<={max_height}]/'
+                f'bestvideo[height<={max_height}]+bestaudio/'
+                f'best'
+            )
+            ydl_opts = {
+                **base_ydl_opts,
+                'outtmpl': temp_out,
+                'format': format_selector,
+                'merge_output_format': 'mp4',
+                'postprocessor_args': {
+                    'Merger': ['-c:v', 'copy', '-c:a', 'copy', '-threads', '4']
+                }
+            }
+
+        if has_cookies:
+            ydl_opts['cookiefile'] = cookie_path
+
+        loop = asyncio.get_event_loop()
+        def _exec():
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([clean_url])
+
+        try:
+            await loop.run_in_executor(None, _exec)
+        except Exception as primary_err:
+            if has_cookies and 'cookiefile' in ydl_opts:
+                ydl_opts_fallback = {**ydl_opts}
+                ydl_opts_fallback.pop('cookiefile', None)
+                await loop.run_in_executor(None, _exec)
+            else:
+                raise primary_err
+
+        # Find produced file
+        candidates = glob.glob(os.path.join(TEMP_DIR, f"{temp_prefix}*"))
+        if not candidates:
+            raise RuntimeError("Media file was not generated by extraction engine.")
+        produced = candidates[0]
+
+        # Atomically rename to permanent cached file
+        if os.path.exists(target_cached_file):
+            try:
+                os.remove(target_cached_file)
+            except Exception:
+                pass
+        os.rename(produced, target_cached_file)
+        return target_cached_file
+
+    current_task = asyncio.create_task(_do_download())
+    ACTIVE_DOWNLOADS[task_key] = current_task
+    try:
+        return await current_task
+    finally:
+        ACTIVE_DOWNLOADS.pop(task_key, None)
 
 class InfoRequest(BaseModel):
     url: str
@@ -126,15 +273,26 @@ async def get_media_info(payload: InfoRequest, request: Request):
     norm_url = normalize_url(raw_url)
 
     # Check cache with normalized and raw URL
-    if norm_url in info_cache:
-        return {"data": info_cache[norm_url], "cached": True}
-    if raw_url in info_cache:
-        return {"data": info_cache[raw_url], "cached": True}
+    cached_data = info_cache.get(norm_url) or info_cache.get(raw_url)
+    if cached_data:
+        # Pre-warm default 720p HD format in background if YouTube
+        if cached_data.get("platform") == "youtube":
+            asyncio.create_task(download_media_to_file(norm_url, "720p", False))
+        return {"data": cached_data, "cached": True}
 
     try:
         data = await extract_media_info(raw_url)
         info_cache[norm_url] = data
         info_cache[raw_url] = data
+
+        # Trigger background pre-download for the default quality (720p HD)
+        # By the time the user clicks "Fast Download", the file is ALREADY ready!
+        if data and data.get("platform") == "youtube":
+            asyncio.create_task(download_media_to_file(norm_url, "720p", False))
+
+        # Periodic cleanup of old downloads
+        cleanup_old_files()
+
         return {"data": data, "cached": False}
     except ValueError as ve:
         raise HTTPException(
@@ -157,9 +315,6 @@ async def stream_download(
     if not safe_filename:
         safe_filename = "DownBoss_media.mp4"
 
-    # 1. If direct sample URL, CDN media, or direct media (.mp4, .jpg, cdninstagram, etc.)
-    import re
-    import shutil
     url_lower = url.lower()
     is_direct_file = (
         bool(re.search(r'\.(?:mp4|mp3|m4a|webm|jpg|jpeg|png|webp)(?:[?&#]|$)', url_lower)) or
@@ -224,125 +379,20 @@ async def stream_download(
             await client.aclose()
             raise HTTPException(status_code=500, detail=f"Proxy error: {str(e)}")
 
-    # 2. Real media extraction and download via yt-dlp
-    download_id = str(uuid.uuid4())[:8]
-    is_audio = quality.lower() == "mp3" or safe_filename.endswith(".mp3")
-    
+    # 2. Real media extraction and download via high-speed cached engine
     clean_url = normalize_url(url.strip())
-
-    cookie_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies.txt")
-    has_cookies = os.path.exists(cookie_path)
-    has_deno = shutil.which("deno") is not None
-    has_node = shutil.which("node") is not None
-
-    pot_server = os.environ.get("YTDLP_POT_SERVER", "http://pot-provider:4416")
-    common_extractor_args = {
-        'youtubepot-bgutilhttp': {
-            'base_url': [pot_server],
-        }
-    }
-
-    base_ydl_opts: Dict[str, Any] = {
-        'quiet': True,
-        'no_warnings': True,
-        'noplaylist': True,
-        'socket_timeout': 60,
-        'concurrent_fragment_downloads': 8,
-        'buffersize': 1024 * 1024,
-        'remote_components': ['ejs:github'],
-        'extractor_args': common_extractor_args,
-    }
-    if has_deno:
-        base_ydl_opts['js_engine'] = 'deno'
-    elif has_node:
-        base_ydl_opts['js_engine'] = 'node'
-
-    if is_audio:
-        out_template = os.path.join(TEMP_DIR, f"{download_id}_audio.%(ext)s")
-        ydl_opts = {
-            **base_ydl_opts,
-            'outtmpl': out_template,
-            'format': 'bestaudio/best',
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '192',
-            }],
-        }
-        if has_cookies:
-            ydl_opts['cookiefile'] = cookie_path
-    else:
-        out_template = os.path.join(TEMP_DIR, f"{download_id}_video.%(ext)s")
-        max_height = 1080
-        quality_lower = quality.lower()
-        if "4k" in quality_lower or "2160" in quality_lower:
-            max_height = 2160
-        elif "2k" in quality_lower or "1440" in quality_lower:
-            max_height = 1440
-        elif "1080" in quality_lower:
-            max_height = 1080
-        elif "720" in quality_lower:
-            max_height = 720
-        elif "480" in quality_lower:
-            max_height = 480
-        elif "360" in quality_lower:
-            max_height = 360
-        else:
-            max_height = 2160
-        
-        format_selector = (
-            f'bestvideo[height<={max_height}]+bestaudio/'
-            f'best[height<={max_height}]/'
-            f'bestvideo+bestaudio/'
-            f'best'
-        )
-        ydl_opts = {
-            **base_ydl_opts,
-            'outtmpl': out_template,
-            'format': format_selector,
-            'merge_output_format': 'mp4',
-        }
-        if has_cookies:
-            ydl_opts['cookiefile'] = cookie_path
+    is_audio = quality.lower() == "mp3" or safe_filename.endswith(".mp3")
 
     try:
-        loop = asyncio.get_event_loop()
-        def _exec_download(opts):
-            with yt_dlp.YoutubeDL(opts) as ydl:
-                ydl.download([clean_url])
-
-        try:
-            await loop.run_in_executor(None, _exec_download, ydl_opts)
-        except Exception as primary_err:
-            # If failed with cookies, try falling back without cookies for public platforms (e.g. reels)
-            if has_cookies and 'cookiefile' in ydl_opts:
-                ydl_opts_fallback = {**ydl_opts}
-                ydl_opts_fallback.pop('cookiefile', None)
-                if 'extractor_args' not in ydl_opts_fallback:
-                    ydl_opts_fallback['extractor_args'] = common_extractor_args
-                await loop.run_in_executor(None, _exec_download, ydl_opts_fallback)
-            else:
-                raise primary_err
-
-        # Find the produced file
-        pattern = os.path.join(TEMP_DIR, f"{download_id}_*")
-        matching = glob.glob(pattern)
-        if not matching:
-            raise HTTPException(status_code=500, detail="Downloaded media file was not found.")
-
-        target_file = matching[0]
+        cached_file = await download_media_to_file(clean_url, quality, is_audio)
         media_type = "audio/mpeg" if is_audio else "video/mp4"
 
         return FileResponse(
-            path=target_file,
+            path=cached_file,
             filename=safe_filename,
-            media_type=media_type,
-            background=BackgroundTask(cleanup_file, target_file)
+            media_type=media_type
         )
     except Exception as e:
-        # Clean any partial downloads
-        for f in glob.glob(os.path.join(TEMP_DIR, f"{download_id}_*")):
-            cleanup_file(f)
         raise HTTPException(status_code=500, detail=f"Failed to download media: {str(e)}")
 
 if __name__ == "__main__":
