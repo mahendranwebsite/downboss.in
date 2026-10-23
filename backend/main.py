@@ -187,24 +187,17 @@ async def download_media_to_file(clean_url: str, quality: str, is_audio: bool = 
             elif "360" in quality_lower:
                 max_height = 360
 
-            # Real High Quality format selection:
-            # 4K (2160p), 2K (1440p), and 1080p require bestvideo + bestaudio merged to prevent falling back to 720p.
-            if max_height <= 720:
-                format_selector = (
-                    f'best[height={max_height}][ext=mp4]/'
-                    f'bestvideo[height<={max_height}][ext=mp4]+bestaudio[ext=m4a]/'
-                    f'bestvideo[height<={max_height}]+bestaudio/'
-                    f'best[height<={max_height}]/'
-                    f'best'
-                )
-            else:
-                format_selector = (
-                    f'bestvideo[height<={max_height}][ext=mp4]+bestaudio[ext=m4a]/'
-                    f'bestvideo[height<={max_height}]+bestaudio/'
-                    f'bestvideo+bestaudio/'
-                    f'best[height<={max_height}]/'
-                    f'best'
-                )
+            # Universal Premiere Pro & Editor Compatible Codecs:
+            # Adobe Premiere Pro, Final Cut Pro, and DaVinci Resolve reject AV1 (av01).
+            # We strictly prioritize H.264 (avc1) video + AAC (mp4a) audio in standard MP4.
+            format_selector = (
+                f'bestvideo[height<={max_height}][vcodec^=avc]+bestaudio[acodec^=mp4a]/'
+                f'bestvideo[height<={max_height}][vcodec^=avc]+bestaudio/'
+                f'best[height<={max_height}][vcodec^=avc]/'
+                f'bestvideo[height<={max_height}][ext=mp4]+bestaudio[ext=m4a]/'
+                f'bestvideo[height<={max_height}]+bestaudio/'
+                f'best'
+            )
             ydl_opts = {
                 **base_ydl_opts,
                 'outtmpl': temp_out,
