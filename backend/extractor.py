@@ -251,13 +251,10 @@ async def extract_media_info(url: str) -> Dict[str, Any]:
         ydl_opts['js_engine'] = 'deno'
     elif has_node:
         ydl_opts['js_engine'] = 'node'
+    ydl_opts['remote_components'] = ['ejs:github']
     if platform == "youtube" or "youtube.com" in url_lower or "youtu.be" in url_lower:
         pot_server = os.environ.get("YTDLP_POT_SERVER", "http://pot-provider:4416")
         ydl_opts['extractor_args'] = {
-            'youtube': {
-                'player_client': ['tv', 'ios', 'android', 'mweb', 'web'],
-                'player_skip': ['webpage', 'configs'],
-            },
             'youtubepot-bgutilhttp': {
                 'base_url': [pot_server],
             }

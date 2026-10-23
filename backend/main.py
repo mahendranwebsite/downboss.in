@@ -235,12 +235,8 @@ async def stream_download(
     has_deno = shutil.which("deno") is not None
     has_node = shutil.which("node") is not None
 
-    pot_server = os.environ.get("YTDLP_POT_SERVER", "http://127.0.0.1:4416")
+    pot_server = os.environ.get("YTDLP_POT_SERVER", "http://pot-provider:4416")
     common_extractor_args = {
-        'youtube': {
-            'player_client': ['tv', 'ios', 'android', 'mweb', 'web'],
-            'player_skip': ['webpage', 'configs'],
-        },
         'youtubepot-bgutilhttp': {
             'base_url': [pot_server],
         }
@@ -253,6 +249,7 @@ async def stream_download(
         'socket_timeout': 60,
         'concurrent_fragment_downloads': 8,
         'buffersize': 1024 * 1024,
+        'remote_components': ['ejs:github'],
         'extractor_args': common_extractor_args,
     }
     if has_deno:
