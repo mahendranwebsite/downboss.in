@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const urlLower = url.toLowerCase();
     const isExplicitSample = KNOWN_SAMPLE_URLS.some((s) => urlLower.includes(s));
 
     // Try communicating with the Python FastAPI backend
