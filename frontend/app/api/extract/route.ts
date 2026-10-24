@@ -9,7 +9,8 @@ const KNOWN_SAMPLE_URLS = [
   'https://www.instagram.com/reel/c7x90123abc/',
   'https://www.facebook.com/watch/?v=987654321012',
   'https://www.instagram.com/p/carousel_kyoto_album/',
-  'https://youtube.com/shorts/sample_short_video'
+  'https://youtube.com/shorts/sample_short_video',
+  'https://www.youtube.com/playlist?list=sample_hits_playlist_2026'
 ];
 
 export async function POST(req: NextRequest) {
@@ -151,7 +152,9 @@ export async function POST(req: NextRequest) {
 
     // Only allow mock data if it was one of the pre-defined sample demonstration buttons
     if (isExplicitSample) {
-      if (urlLower.includes('carousel')) {
+      if (urlLower.includes('playlist')) {
+        return NextResponse.json({ data: SAMPLE_MEDIA_MOCK.youtube_playlist, cached: false });
+      } else if (urlLower.includes('carousel')) {
         return NextResponse.json({ data: SAMPLE_MEDIA_MOCK.carousel, cached: false });
       } else if (urlLower.includes('instagram.com')) {
         return NextResponse.json({ data: SAMPLE_MEDIA_MOCK.instagram, cached: false });

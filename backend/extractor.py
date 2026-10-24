@@ -12,7 +12,8 @@ KNOWN_SAMPLE_URLS = {
     "https://www.instagram.com/reel/c7x90123abc/": "instagram",
     "https://www.facebook.com/watch/?v=987654321012": "facebook",
     "https://www.instagram.com/p/carousel_kyoto_album/": "carousel",
-    "https://youtube.com/shorts/sample_short_video": "youtube"
+    "https://youtube.com/shorts/sample_short_video": "youtube",
+    "https://www.youtube.com/playlist?list=sample_hits_playlist_2026": "youtube_playlist"
 }
 
 def detect_platform(url: str) -> str:
@@ -121,6 +122,86 @@ SAMPLE_MEDIA = {
             {"id": "item-6", "type": "image", "url": "https://images.unsplash.com/photo-1536098561742-ca998e48cbcc?auto=format&fit=crop&w=1200&q=85", "thumbnail": "https://images.unsplash.com/photo-1536098561742-ca998e48cbcc?auto=format&fit=crop&w=400&q=80", "caption": "Slide 6: Shinto Torii Gate"}
         ],
         "formats": []
+    },
+    "youtube_playlist": {
+        "title": "Billboard Top Viral Hits 2026 (Global Music Video Playlist)",
+        "author": "@YouTubeMusic",
+        "thumbnail": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80",
+        "duration": "6 Videos",
+        "platform": "youtube",
+        "type": "YouTube Playlist",
+        "is_carousel": False,
+        "is_playlist": True,
+        "playlist_count": 6,
+        "playlist_items": [
+            {
+                "id": "pl-item-1",
+                "title": "Cyberpunk 2077 Night City 4K Cinematic Atmosphere Tour",
+                "duration": "4:12",
+                "duration_seconds": 252,
+                "thumbnail": "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80",
+                "url": "https://www.youtube.com/watch?v=sample_vid_1",
+                "author": "@GamerVision",
+                "index": 1
+            },
+            {
+                "id": "pl-item-2",
+                "title": "Midnight Chillout Lofi Beats - Study & Relaxation Session",
+                "duration": "3:45",
+                "duration_seconds": 225,
+                "thumbnail": "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&w=800&q=80",
+                "url": "https://www.youtube.com/watch?v=sample_vid_2",
+                "author": "@LofiVibes",
+                "index": 2
+            },
+            {
+                "id": "pl-item-3",
+                "title": "Neon Dreams Synthwave Horizon (Official 4K Music Video)",
+                "duration": "5:18",
+                "duration_seconds": 318,
+                "thumbnail": "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&w=800&q=80",
+                "url": "https://www.youtube.com/watch?v=sample_vid_3",
+                "author": "@RetroWaveRecords",
+                "index": 3
+            },
+            {
+                "id": "pl-item-4",
+                "title": "Tokyo Rainy Day Walking Tour in 4K 60FPS Ambient Audio",
+                "duration": "6:30",
+                "duration_seconds": 390,
+                "thumbnail": "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=800&q=80",
+                "url": "https://www.youtube.com/watch?v=sample_vid_4",
+                "author": "@TokyoWanderer",
+                "index": 4
+            },
+            {
+                "id": "pl-item-5",
+                "title": "Electronic Deep Bass Groove - Club Mix Vol. 4",
+                "duration": "4:05",
+                "duration_seconds": 245,
+                "thumbnail": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=800&q=80",
+                "url": "https://www.youtube.com/watch?v=sample_vid_5",
+                "author": "@BassDropMusic",
+                "index": 5
+            },
+            {
+                "id": "pl-item-6",
+                "title": "Acoustic Sunset Guitar Melodies - Live Studio Session",
+                "duration": "3:52",
+                "duration_seconds": 232,
+                "thumbnail": "https://images.unsplash.com/photo-1510915361894-db8b60106cb1?auto=format&fit=crop&w=800&q=80",
+                "url": "https://www.youtube.com/watch?v=sample_vid_6",
+                "author": "@AcousticSession",
+                "index": 6
+            }
+        ],
+        "items": [],
+        "formats": [
+            {"quality": "1080p HD", "res": "1080p", "size": "Full HD", "ext": "mp4", "url": "https://vjs.zencdn.net/v/oceans.mp4"},
+            {"quality": "720p HD", "res": "720p", "size": "High Speed", "ext": "mp4", "url": "https://media.w3.org/2010/05/bunny/trailer.mp4"},
+            {"quality": "480p Low", "res": "480p", "size": "Compressed", "ext": "mp4", "url": "https://media.w3.org/2010/05/sintel/trailer.mp4"},
+            {"quality": "MP3 Audio", "res": "MP3", "size": "Audio Rip", "ext": "mp3", "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"}
+        ]
     }
 }
 
@@ -209,17 +290,110 @@ def extract_with_gallery_dl(url: str) -> Optional[Dict[str, Any]]:
         print(f"gallery-dl error for {url}: {e}")
         return None
 
+async def extract_youtube_playlist(pl_url: str, cookie_path: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Extracts high-speed flat metadata for YouTube playlists (up to 100 items).
+    """
+    loop = asyncio.get_event_loop()
+    pot_server = os.environ.get("YTDLP_POT_SERVER", "http://pot-provider:4416")
+    ydl_pl_opts = {
+        'quiet': True,
+        'no_warnings': True,
+        'extract_flat': True,
+        'skip_download': True,
+        'playlistend': 100,
+        'socket_timeout': 30,
+        'extractor_args': {
+            'youtubepot-bgutilhttp': {
+                'base_url': [pot_server],
+            }
+        },
+        'http_headers': {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+            'Accept-Language': 'en-US,en;q=0.9',
+        }
+    }
+    if cookie_path and os.path.exists(cookie_path):
+        ydl_pl_opts['cookiefile'] = cookie_path
+
+    def _fetch_pl():
+        with yt_dlp.YoutubeDL(ydl_pl_opts) as ydl:
+            return ydl.extract_info(pl_url, download=False)
+
+    info = await loop.run_in_executor(None, _fetch_pl)
+    if not info:
+        raise ValueError("Could not retrieve playlist information from YouTube.")
+
+    raw_entries = info.get('entries') or []
+    items = []
+
+    for entry in raw_entries:
+        if not entry:
+            continue
+        vid_id = entry.get('id')
+        title = entry.get('title')
+        if not vid_id or not title or title in ['[Private video]', '[Deleted video]']:
+            continue
+
+        dur_secs = entry.get('duration')
+        dur_str = format_duration(dur_secs) if dur_secs else "Video"
+
+        thumbs = entry.get('thumbnails') or []
+        thumb = thumbs[-1]['url'] if thumbs else f"https://i.ytimg.com/vi/{vid_id}/hqdefault.jpg"
+        vid_url = entry.get('url')
+        if not vid_url or not vid_url.startswith('http'):
+            vid_url = f"https://www.youtube.com/watch?v={vid_id}"
+
+        uploader = entry.get('uploader') or entry.get('channel') or info.get('uploader') or '@YouTube'
+
+        items.append({
+            "id": vid_id,
+            "title": title,
+            "duration": dur_str,
+            "duration_seconds": dur_secs or 0,
+            "thumbnail": thumb,
+            "url": vid_url,
+            "author": uploader if uploader.startswith('@') else f"@{uploader}",
+            "index": len(items) + 1
+        })
+
+    if not items:
+        raise ValueError("This YouTube playlist is empty or contains only private/unavailable videos.")
+
+    pl_title = info.get('title') or 'YouTube Playlist'
+    pl_author = info.get('uploader') or info.get('channel') or '@YouTube'
+    if not pl_author.startswith('@'):
+        pl_author = f"@{pl_author}"
+
+    pl_thumbs = info.get('thumbnails') or []
+    pl_thumb = pl_thumbs[-1]['url'] if pl_thumbs else items[0]['thumbnail']
+
+    first_vid_url = items[0]['url']
+    return {
+        "title": pl_title,
+        "author": pl_author,
+        "thumbnail": pl_thumb,
+        "duration": f"{len(items)} Videos",
+        "platform": "youtube",
+        "type": "YouTube Playlist",
+        "is_carousel": False,
+        "is_playlist": True,
+        "playlist_count": len(items),
+        "playlist_items": items,
+        "items": [],
+        "formats": [
+            {"quality": "1080p HD", "res": "1080p", "size": "High Definition", "ext": "mp4", "url": f"/api/download?url={first_vid_url}&quality=1080p"},
+            {"quality": "720p HD", "res": "720p", "size": "Fast Download", "ext": "mp4", "url": f"/api/download?url={first_vid_url}&quality=720p"},
+            {"quality": "480p SD", "res": "480p", "size": "Medium Quality", "ext": "mp4", "url": f"/api/download?url={first_vid_url}&quality=480p"},
+            {"quality": "MP3 Audio", "res": "MP3", "size": "Audio Rip", "ext": "mp3", "url": f"/api/download?url={first_vid_url}&quality=mp3"}
+        ],
+        "originalUrl": pl_url
+    }
+
 async def extract_media_info(url: str) -> Dict[str, Any]:
     url_clean = url.strip()
     url_lower = url_clean.lower()
     platform = detect_platform(url_clean)
-
-    # Clean YouTube URLs from playlist / mix parameters (&list=, &index=)
-    if "youtube.com/watch" in url_clean and "v=" in url_clean:
-        vid_match = re.search(r'[?&]v=([a-zA-Z0-9_-]+)', url_clean)
-        if vid_match:
-            url_clean = f"https://www.youtube.com/watch?v={vid_match.group(1)}"
-            url_lower = url_clean.lower()
 
     # 1. Check if this is an explicit sample demonstration link from the UI
     for sample_link, sample_key in KNOWN_SAMPLE_URLS.items():
@@ -228,7 +402,32 @@ async def extract_media_info(url: str) -> Dict[str, Any]:
             mock["originalUrl"] = url_clean
             return mock
 
-    # 2. Try yt-dlp first for video/reel extraction
+    # 2. Check if this is a YouTube playlist link
+    is_yt = platform == "youtube" or "youtube.com" in url_lower or "youtu.be" in url_lower
+    cookie_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies.txt")
+
+    if is_yt:
+        list_match = re.search(r'[?&]list=([a-zA-Z0-9_-]+)', url_clean)
+        is_explicit_playlist = "/playlist" in url_lower
+        if list_match:
+            list_id = list_match.group(1)
+            # Exclude personal special lists (LL = Liked, WL = Watch Later)
+            if list_id.lower() not in ["ll", "wl"]:
+                if is_explicit_playlist or "v=" not in url_clean or list_id.startswith(("PL", "UU", "FL", "OLAK")):
+                    target_pl = f"https://www.youtube.com/playlist?list={list_id}"
+                    try:
+                        return await extract_youtube_playlist(target_pl, cookie_path)
+                    except Exception as pl_err:
+                        print(f"Playlist extraction failed, falling back to standard video: {pl_err}")
+
+    # Clean YouTube URLs from playlist / mix parameters (&list=, &index=) for standard single video extraction
+    if "youtube.com/watch" in url_clean and "v=" in url_clean:
+        vid_match = re.search(r'[?&]v=([a-zA-Z0-9_-]+)', url_clean)
+        if vid_match:
+            url_clean = f"https://www.youtube.com/watch?v={vid_match.group(1)}"
+            url_lower = url_clean.lower()
+
+    # 3. Try yt-dlp for video/reel extraction
     cookie_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies.txt")
     ydl_opts = {
         'quiet': True,

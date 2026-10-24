@@ -58,6 +58,13 @@ export const OfficialLogo: React.FC<{ id: string; className?: string }> = ({ id,
           <path d="M9.545 15.568V8.432L15.818 12l-6.273 3.568z" fill="#FFFFFF" />
         </svg>
       );
+    case 'youtube-playlist':
+      return (
+        <svg viewBox="0 0 24 24" className={className} fill="none">
+          <path d="M3 6h12M3 12h12M3 18h8" stroke="#FF0000" strokeWidth="2.4" strokeLinecap="round" />
+          <polygon points="17,14 17,22 23,18" fill="#FF0000" />
+        </svg>
+      );
     case 'tiktok':
       return (
         <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
@@ -108,9 +115,9 @@ interface PlatformTabsProps {
 }
 
 export const PlatformTabs: React.FC<PlatformTabsProps> = ({ selectedPlatform, onSelectPlatform }) => {
-  // Main top tabs (active platforms: All, YouTube, Instagram, Facebook, Twitter)
-  const mainPlatforms = PLATFORMS.filter(p => ['all', 'youtube', 'instagram', 'facebook', 'twitter'].includes(p.id));
-  const morePlatforms = PLATFORMS.filter(p => !['all', 'youtube', 'instagram', 'facebook', 'twitter'].includes(p.id));
+  // Main top tabs (active platforms: All, YouTube, YT Playlist, Instagram, Facebook, Twitter)
+  const mainPlatforms = PLATFORMS.filter(p => ['all', 'youtube', 'youtube-playlist', 'instagram', 'facebook', 'twitter'].includes(p.id));
+  const morePlatforms = PLATFORMS.filter(p => !['all', 'youtube', 'youtube-playlist', 'instagram', 'facebook', 'twitter'].includes(p.id));
 
   return (
     <div className="flex flex-col items-center gap-3 w-full">

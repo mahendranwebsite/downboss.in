@@ -95,6 +95,10 @@ def normalize_url(url: str) -> str:
         netloc = parsed.netloc.lower()
         if "youtube.com" in netloc or "youtu.be" in netloc:
             qs = urllib.parse.parse_qs(parsed.query)
+            if "list" in qs and qs["list"]:
+                list_id = qs["list"][0]
+                if "playlist" in parsed.path or not ("v" in qs and qs["v"]) or list_id.startswith(("PL", "UU", "FL", "OLAK")):
+                    return f"https://www.youtube.com/playlist?list={list_id}"
             if "v" in qs and qs["v"]:
                 return f"https://www.youtube.com/watch?v={qs['v'][0]}"
             parts = [p for p in parsed.path.split("/") if p]
@@ -314,8 +318,8 @@ async def get_media_info(payload: InfoRequest, request: Request):
     # Check cache with normalized and raw URL
     cached_data = info_cache.get(norm_url) or info_cache.get(raw_url)
     if cached_data:
-        # Pre-warm default 720p HD format in background if YouTube
-        if cached_data.get("platform") == "youtube":
+        # Pre-warm default 720p HD format in background if YouTube single video
+        if cached_data.get("platform") == "youtube" and not cached_data.get("is_playlist"):
             asyncio.create_task(download_media_to_file(norm_url, "720p", False))
         return {"data": cached_data, "cached": True}
 
@@ -325,8 +329,7 @@ async def get_media_info(payload: InfoRequest, request: Request):
         info_cache[raw_url] = data
 
         # Trigger background pre-download for the default quality (720p HD)
-        # By the time the user clicks "Fast Download", the file is ALREADY ready!
-        if data and data.get("platform") == "youtube":
+        if data and data.get("platform") == "youtube" and not data.get("is_playlist"):
             asyncio.create_task(download_media_to_file(norm_url, "720p", False))
 
         # Periodic cleanup of old downloads

@@ -61,6 +61,10 @@ export const Footer: React.FC = () => {
             YouTube Video Downloader
           </Link>
           <span>•</span>
+          <Link href="/youtube-playlist-downloader" className="hover:text-red-500 font-semibold transition-colors">
+            YouTube Playlist Downloader
+          </Link>
+          <span>•</span>
           <Link href="/twitter-video-downloader" className="hover:text-indigo-500 transition-colors">
             X (Twitter) Video Downloader
           </Link>

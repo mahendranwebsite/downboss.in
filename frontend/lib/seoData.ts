@@ -71,6 +71,26 @@ export const SEO_PAGES: Record<string, SeoLandingPageData> = {
       { q: 'Can I download YouTube videos as MP3 audio?', a: 'Yes, select the MP3 Audio button on the preview card to download the audio track.' }
     ]
   },
+  'youtube-playlist-downloader': {
+    slug: 'youtube-playlist-downloader',
+    platform: 'youtube-playlist',
+    title: 'Free YouTube Playlist Downloader (MP4 & MP3) - DownBoss.in',
+    metaDescription:
+      'Download entire YouTube playlists online in 1080p HD MP4 or MP3 audio. Fast batch playlist downloader with no limits, no registration, and no software installation.',
+    h1: 'YouTube Playlist Downloader',
+    subtitle: 'Save full YouTube playlists or choose specific videos to download in 1080p Full HD, 720p, or MP3 audio in seconds.',
+    platformName: 'YouTube Playlist',
+    features: [
+      { title: 'Full Playlist Batch Support', desc: 'Paste any YouTube playlist link and get instant access to all videos in the album.' },
+      { title: 'Download Selected Tracks', desc: 'Select individual videos or all tracks with a single click and download them sequentially.' },
+      { title: 'MP4 & MP3 Audio Rip', desc: 'Convert entire music playlists or podcast series directly to high-bitrate 320kbps MP3 audio files.' }
+    ],
+    faqs: [
+      { q: 'How do I download a YouTube Playlist?', a: 'Copy the playlist URL (e.g., youtube.com/playlist?list=...), paste it into DownBoss, select your desired videos or "Select All", and click Download Selected.' },
+      { q: 'Can I download an entire playlist as MP3 audio?', a: 'Yes! Click "Download All as MP3" and DownBoss will convert and queue all selected playlist tracks into MP3 files.' },
+      { q: 'Is there a limit on how many videos I can download?', a: 'No, DownBoss is 100% free with unlimited playlist downloads.' }
+    ]
+  },
   'twitter-video-downloader': {
     slug: 'twitter-video-downloader',
     platform: 'twitter',

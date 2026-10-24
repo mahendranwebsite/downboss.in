@@ -186,6 +186,7 @@ export default function HomePage() {
           progressStatus={progressStatus}
           mediaData={mediaData}
           onShowToast={showToast}
+          onOpenBatch={() => setIsBatchOpen(true)}
         />
 
         {/* Below-Result Ad Slot */}

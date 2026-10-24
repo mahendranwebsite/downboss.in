@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { MediaData, MediaFormat } from '../lib/types';
 import { Play, DownloadCloud, Twitter, Instagram, Facebook, Youtube, Music, CheckCircle2, Layers, Zap, ArrowDownToLine, Film, Sparkles, Loader2, Check } from 'lucide-react';
 import { CarouselGrid } from './CarouselGrid';
+import { PlaylistGrid } from './PlaylistGrid';
 import { downloadMediaFile, saveDownloadToHistory } from '../lib/api';
 import { OfficialLogo } from './PlatformTabs';
 
@@ -13,6 +14,7 @@ interface MediaResultProps {
   progressStatus: string;
   mediaData: MediaData | null;
   onShowToast: (msg: string) => void;
+  onOpenBatch?: (urls: string[]) => void;
 }
 
 export const MediaResult: React.FC<MediaResultProps> = ({
@@ -20,7 +22,8 @@ export const MediaResult: React.FC<MediaResultProps> = ({
   progressPercent,
   progressStatus,
   mediaData,
-  onShowToast
+  onShowToast,
+  onOpenBatch
 }) => {
   const [selectedQuality, setSelectedQuality] = useState<string>('1080p HD');
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
@@ -147,6 +150,13 @@ export const MediaResult: React.FC<MediaResultProps> = ({
             <span>YouTube</span>
           </span>
         );
+      case 'youtube-playlist':
+        return (
+          <span className="absolute top-3 left-3 px-2.5 py-1 rounded-lg text-xs font-bold text-white flex items-center gap-1.5 shadow-md bg-red-600">
+            <OfficialLogo id="youtube-playlist" className="w-3.5 h-3.5" />
+            <span>YT Playlist</span>
+          </span>
+        );
       case 'tiktok':
         return (
           <span className="absolute top-3 left-3 px-2.5 py-1 rounded-lg text-xs font-bold text-white flex items-center gap-1.5 shadow-md bg-black">
@@ -261,7 +271,10 @@ export const MediaResult: React.FC<MediaResultProps> = ({
       {/* Preview Content */}
       {!isLoading && mediaData && (
         <>
-          {mediaData.is_carousel ? (
+          {mediaData.is_playlist ? (
+            /* YouTube Playlist Grid Display */
+            <PlaylistGrid mediaData={mediaData} onShowToast={onShowToast} onOpenBatch={onOpenBatch} />
+          ) : mediaData.is_carousel ? (
             /* Carousel Grid Display */
             <CarouselGrid mediaData={mediaData} onShowToast={onShowToast} />
           ) : (

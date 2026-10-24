@@ -59,6 +59,16 @@ export const PLATFORMS: PlatformConfig[] = [
     isComingSoon: false
   },
   {
+    id: 'youtube-playlist',
+    name: 'YT Playlist',
+    iconName: 'ListVideo',
+    colorClass: 'text-red-500',
+    badgeBg: 'bg-red-600',
+    placeholder: 'Paste YouTube Playlist link (e.g. youtube.com/playlist?list=...)',
+    domainKeywords: ['youtube.com/playlist', 'youtu.be/playlist'],
+    isComingSoon: false
+  },
+  {
     id: 'tiktok',
     name: 'TikTok',
     iconName: 'Music',
@@ -130,11 +140,22 @@ export const SAMPLE_LINKS = [
     label: 'TikTok Video',
     url: 'https://www.tiktok.com/@sample_traveler/video/7391234567890123456',
     badgeClass: 'bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-400'
+  },
+  {
+    label: 'YT Playlist (6 Tracks)',
+    url: 'https://www.youtube.com/playlist?list=sample_hits_playlist_2026',
+    badgeClass: 'bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400'
   }
 ];
 
 export function detectPlatformFromUrl(url: string): PlatformId {
   const urlLower = url.toLowerCase();
+  if (
+    (urlLower.includes('youtube.com') || urlLower.includes('youtu.be')) &&
+    (urlLower.includes('/playlist') || urlLower.includes('list=pl') || urlLower.includes('list=uu') || urlLower.includes('list=fl') || urlLower.includes('list=olak'))
+  ) {
+    return 'youtube-playlist';
+  }
   for (const p of PLATFORMS) {
     if (p.id === 'all') continue;
     if (p.domainKeywords.some(kw => urlLower.includes(kw))) {

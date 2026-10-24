@@ -14,6 +14,17 @@ export interface CarouselItem {
   caption?: string;
 }
 
+export interface PlaylistItem {
+  id: string;
+  title: string;
+  duration: string;
+  duration_seconds?: number;
+  thumbnail: string;
+  url: string;
+  author: string;
+  index: number;
+}
+
 export interface MediaData {
   title: string;
   author: string;
@@ -22,6 +33,9 @@ export interface MediaData {
   platform: string;
   type: string;
   is_carousel: boolean;
+  is_playlist?: boolean;
+  playlist_count?: number;
+  playlist_items?: PlaylistItem[];
   items: CarouselItem[];
   formats: MediaFormat[];
   originalUrl: string;
@@ -43,6 +57,7 @@ export type PlatformId =
   | 'instagram'
   | 'facebook'
   | 'youtube'
+  | 'youtube-playlist'
   | 'tiktok'
   | 'pinterest'
   | 'reddit'

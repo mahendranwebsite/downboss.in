@@ -17,6 +17,10 @@ export const FAQ_DATA = [
     a: 'Yes! DownBoss extracts the direct high-definition CDN stream, meaning videos from TikTok and Instagram reels can be downloaded in crisp 1080p without platform watermarks whenever supported by the source stream.'
   },
   {
+    q: 'How do I download an entire YouTube Playlist?',
+    a: 'Paste any YouTube playlist URL (e.g., youtube.com/playlist?list=...) into the DownBoss search bar. DownBoss will load all videos in the playlist, allowing you to select tracks and click "Download Selected (MP4)" or "Download All as MP3" to batch download them effortlessly.'
+  },
+  {
     q: 'Can I extract only the audio (MP3) from a video?',
     a: 'Yes, for supported video posts, DownBoss provides an "MP3 Audio" quality button that allows you to download just the background sound or voice track as a high-bitrate MP3 audio file.'
   },

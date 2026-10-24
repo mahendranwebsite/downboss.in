@@ -73,6 +73,86 @@ export const SAMPLE_MEDIA_MOCK: Record<string, MediaData> = {
     ],
     originalUrl: 'https://youtube.com/shorts/sample_short_video'
   },
+  youtube_playlist: {
+    title: 'Billboard Top Viral Hits 2026 (Global Music Video Playlist)',
+    author: '@YouTubeMusic',
+    thumbnail: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80',
+    duration: '6 Videos',
+    platform: 'youtube',
+    type: 'YouTube Playlist',
+    is_carousel: false,
+    is_playlist: true,
+    playlist_count: 6,
+    playlist_items: [
+      {
+        id: 'pl-item-1',
+        title: 'Cyberpunk 2077 Night City 4K Cinematic Atmosphere Tour',
+        duration: '4:12',
+        duration_seconds: 252,
+        thumbnail: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80',
+        url: 'https://www.youtube.com/watch?v=sample_vid_1',
+        author: '@GamerVision',
+        index: 1
+      },
+      {
+        id: 'pl-item-2',
+        title: 'Midnight Chillout Lofi Beats - Study & Relaxation Session',
+        duration: '3:45',
+        duration_seconds: 225,
+        thumbnail: 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&w=800&q=80',
+        url: 'https://www.youtube.com/watch?v=sample_vid_2',
+        author: '@LofiVibes',
+        index: 2
+      },
+      {
+        id: 'pl-item-3',
+        title: 'Neon Dreams Synthwave Horizon (Official 4K Music Video)',
+        duration: '5:18',
+        duration_seconds: 318,
+        thumbnail: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&w=800&q=80',
+        url: 'https://www.youtube.com/watch?v=sample_vid_3',
+        author: '@RetroWaveRecords',
+        index: 3
+      },
+      {
+        id: 'pl-item-4',
+        title: 'Tokyo Rainy Day Walking Tour in 4K 60FPS Ambient Audio',
+        duration: '6:30',
+        duration_seconds: 390,
+        thumbnail: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=800&q=80',
+        url: 'https://www.youtube.com/watch?v=sample_vid_4',
+        author: '@TokyoWanderer',
+        index: 4
+      },
+      {
+        id: 'pl-item-5',
+        title: 'Electronic Deep Bass Groove - Club Mix Vol. 4',
+        duration: '4:05',
+        duration_seconds: 245,
+        thumbnail: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=800&q=80',
+        url: 'https://www.youtube.com/watch?v=sample_vid_5',
+        author: '@BassDropMusic',
+        index: 5
+      },
+      {
+        id: 'pl-item-6',
+        title: 'Acoustic Sunset Guitar Melodies - Live Studio Session',
+        duration: '3:52',
+        duration_seconds: 232,
+        thumbnail: 'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?auto=format&fit=crop&w=800&q=80',
+        url: 'https://www.youtube.com/watch?v=sample_vid_6',
+        author: '@AcousticSession',
+        index: 6
+      }
+    ],
+    items: [],
+    formats: [
+      { quality: '1080p HD', res: '1080p', size: 'Full HD', ext: 'mp4', url: 'https://vjs.zencdn.net/v/oceans.mp4' },
+      { quality: '720p HD', res: '720p', size: 'High Speed', ext: 'mp4', url: 'https://media.w3.org/2010/05/bunny/trailer.mp4' },
+      { quality: '480p Low', res: '480p', size: 'Compressed', ext: 'mp4', url: 'https://media.w3.org/2010/05/sintel/trailer.mp4' },
+      { quality: 'MP3 Audio', res: 'MP3', size: 'Audio Rip', ext: 'mp3', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' }
+    ]
+  },
   tiktok: {
     title: 'Viral Street Dance Choreography in Tokyo Shibuya Crossing 🎧🕺',
     author: '@tokyo_moves',
