@@ -134,8 +134,9 @@ async def download_media_to_file(clean_url: str, quality: str, is_audio: bool = 
 
     # 3. Create execution task
     async def _do_download() -> str:
-        cookie_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies.txt")
-        has_cookies = os.path.exists(cookie_path)
+        from extractor import get_writable_cookie_path
+        cookie_path = get_writable_cookie_path()
+        has_cookies = cookie_path is not None and os.path.exists(cookie_path)
         has_deno = shutil.which("deno") is not None
         has_node = shutil.which("node") is not None
 

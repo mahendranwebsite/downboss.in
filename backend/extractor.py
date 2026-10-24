@@ -290,6 +290,20 @@ def extract_with_gallery_dl(url: str) -> Optional[Dict[str, Any]]:
         print(f"gallery-dl error for {url}: {e}")
         return None
 
+def get_writable_cookie_path() -> Optional[str]:
+    import tempfile
+    import shutil
+    base = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies.txt")
+    if not os.path.exists(base):
+        return None
+    try:
+        temp_dir = tempfile.gettempdir()
+        temp_cookie = os.path.join(temp_dir, "ytdl_writable_cookies.txt")
+        shutil.copyfile(base, temp_cookie)
+        return temp_cookie
+    except Exception:
+        return base
+
 async def extract_youtube_playlist(pl_url: str, cookie_path: Optional[str] = None) -> Dict[str, Any]:
     """
     Extracts high-speed flat metadata for YouTube playlists (up to 100 items).
@@ -404,7 +418,7 @@ async def extract_media_info(url: str) -> Dict[str, Any]:
 
     # 2. Check if this is a YouTube playlist link
     is_yt = platform == "youtube" or "youtube.com" in url_lower or "youtu.be" in url_lower
-    cookie_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies.txt")
+    cookie_path = get_writable_cookie_path()
 
     if is_yt:
         list_match = re.search(r'[?&]list=([a-zA-Z0-9_-]+)', url_clean)
@@ -428,7 +442,6 @@ async def extract_media_info(url: str) -> Dict[str, Any]:
             url_lower = url_clean.lower()
 
     # 3. Try yt-dlp for video/reel extraction
-    cookie_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies.txt")
     ydl_opts = {
         'quiet': True,
         'no_warnings': True,
