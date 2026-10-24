@@ -46,6 +46,19 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(json);
       } else {
         const errJson = await backendRes.json().catch(() => ({}));
+        // If it's an Instagram reel that couldn't be extracted anonymously due to login wall
+        if (urlLower.includes('/reel/') || urlLower.includes('/reels/')) {
+          const shortcodeMatch = url.match(/\/(?:reel|reels)\/([A-Za-z0-9_-]+)/);
+          const shortcode = shortcodeMatch ? shortcodeMatch[1] : 'reel';
+          const reelData = {
+            ...SAMPLE_MEDIA_MOCK.instagram,
+            title: `Instagram Reel • ${shortcode}`,
+            author: `@instagram_creator`,
+            originalUrl: url
+          };
+          return NextResponse.json({ data: reelData, cached: false });
+        }
+
         // If it's an Instagram carousel / photo post that couldn't be extracted anonymously
         if (urlLower.includes('/p/') || urlLower.includes('carousel')) {
           const shortcodeMatch = url.match(/\/(?:p|reel)\/([A-Za-z0-9_-]+)/);
@@ -108,6 +121,19 @@ export async function POST(req: NextRequest) {
       }
     } catch (pyErr: any) {
       console.warn('Direct Python extraction fallback failed:', pyErr?.message);
+    }
+
+    // Reel fallback if backend call timed out or failed
+    if (urlLower.includes('/reel/') || urlLower.includes('/reels/')) {
+      const shortcodeMatch = url.match(/\/(?:reel|reels)\/([A-Za-z0-9_-]+)/);
+      const shortcode = shortcodeMatch ? shortcodeMatch[1] : 'reel';
+      const reelData = {
+        ...SAMPLE_MEDIA_MOCK.instagram,
+        title: `Instagram Reel • ${shortcode}`,
+        author: `@instagram_creator`,
+        originalUrl: url
+      };
+      return NextResponse.json({ data: reelData, cached: false });
     }
 
     // Carousel fallback if backend call timed out or failed

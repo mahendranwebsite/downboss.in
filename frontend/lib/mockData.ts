@@ -11,11 +11,11 @@ export const SAMPLE_MEDIA_MOCK: Record<string, MediaData> = {
     is_carousel: false,
     items: [],
     formats: [
-      { quality: '4K Ultra HD', res: '2160p', size: '145.0 MB', ext: 'mp4', url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4' },
-      { quality: '2K Quad HD', res: '1440p', size: '82.5 MB', ext: 'mp4', url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4' },
-      { quality: '1080p HD', res: '1080p', size: '42.5 MB', ext: 'mp4', url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4' },
-      { quality: '720p SD', res: '720p', size: '24.1 MB', ext: 'mp4', url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4' },
-      { quality: '480p Low', res: '480p', size: '12.8 MB', ext: 'mp4', url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4' },
+      { quality: '4K Ultra HD', res: '2160p', size: '145.0 MB', ext: 'mp4', url: 'https://vjs.zencdn.net/v/oceans.mp4' },
+      { quality: '2K Quad HD', res: '1440p', size: '82.5 MB', ext: 'mp4', url: 'https://vjs.zencdn.net/v/oceans.mp4' },
+      { quality: '1080p HD', res: '1080p', size: '42.5 MB', ext: 'mp4', url: 'https://vjs.zencdn.net/v/oceans.mp4' },
+      { quality: '720p SD', res: '720p', size: '24.1 MB', ext: 'mp4', url: 'https://media.w3.org/2010/05/bunny/trailer.mp4' },
+      { quality: '480p Low', res: '480p', size: '12.8 MB', ext: 'mp4', url: 'https://media.w3.org/2010/05/sintel/trailer.mp4' },
       { quality: 'MP3 Audio', res: 'MP3', size: '3.2 MB', ext: 'mp3', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' }
     ],
     originalUrl: 'https://x.com/tech_insider/status/1789123456789'
@@ -30,9 +30,9 @@ export const SAMPLE_MEDIA_MOCK: Record<string, MediaData> = {
     is_carousel: false,
     items: [],
     formats: [
-      { quality: '1080p HD', res: '1080p', size: '38.2 MB', ext: 'mp4', url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4' },
-      { quality: '720p SD', res: '720p', size: '21.6 MB', ext: 'mp4', url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4' },
-      { quality: '480p Low', res: '480p', size: '10.4 MB', ext: 'mp4', url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4' },
+      { quality: '1080p HD', res: '1080p', size: '38.2 MB', ext: 'mp4', url: 'https://vjs.zencdn.net/v/oceans.mp4' },
+      { quality: '720p SD', res: '720p', size: '21.6 MB', ext: 'mp4', url: 'https://media.w3.org/2010/05/bunny/trailer.mp4' },
+      { quality: '480p Low', res: '480p', size: '10.4 MB', ext: 'mp4', url: 'https://media.w3.org/2010/05/sintel/trailer.mp4' },
       { quality: 'MP3 Audio', res: 'MP3', size: '2.8 MB', ext: 'mp3', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' }
     ],
     originalUrl: 'https://www.instagram.com/reel/C7X90123ABC/'
@@ -47,9 +47,9 @@ export const SAMPLE_MEDIA_MOCK: Record<string, MediaData> = {
     is_carousel: false,
     items: [],
     formats: [
-      { quality: '1080p HD', res: '1080p', size: '65.4 MB', ext: 'mp4', url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4' },
-      { quality: '720p SD', res: '720p', size: '34.0 MB', ext: 'mp4', url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4' },
-      { quality: '480p Low', res: '480p', size: '18.2 MB', ext: 'mp4', url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4' },
+      { quality: '1080p HD', res: '1080p', size: '65.4 MB', ext: 'mp4', url: 'https://vjs.zencdn.net/v/oceans.mp4' },
+      { quality: '720p SD', res: '720p', size: '34.0 MB', ext: 'mp4', url: 'https://media.w3.org/2010/05/bunny/trailer.mp4' },
+      { quality: '480p Low', res: '480p', size: '18.2 MB', ext: 'mp4', url: 'https://media.w3.org/2010/05/sintel/trailer.mp4' },
       { quality: 'MP3 Audio', res: 'MP3', size: '4.5 MB', ext: 'mp3', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' }
     ],
     originalUrl: 'https://www.facebook.com/watch/?v=987654321012'
@@ -64,11 +64,11 @@ export const SAMPLE_MEDIA_MOCK: Record<string, MediaData> = {
     is_carousel: false,
     items: [],
     formats: [
-      { quality: '4K Ultra HD', res: '2160p', size: '210.0 MB', ext: 'mp4', url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4' },
-      { quality: '2K Quad HD', res: '1440p', size: '125.0 MB', ext: 'mp4', url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4' },
-      { quality: '1080p HD', res: '1080p', size: '78.0 MB', ext: 'mp4', url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4' },
-      { quality: '720p SD', res: '720p', size: '42.1 MB', ext: 'mp4', url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4' },
-      { quality: '480p Low', res: '480p', size: '21.5 MB', ext: 'mp4', url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackSeeTheWorld.mp4' },
+      { quality: '4K Ultra HD', res: '2160p', size: '210.0 MB', ext: 'mp4', url: 'https://vjs.zencdn.net/v/oceans.mp4' },
+      { quality: '2K Quad HD', res: '1440p', size: '125.0 MB', ext: 'mp4', url: 'https://vjs.zencdn.net/v/oceans.mp4' },
+      { quality: '1080p HD', res: '1080p', size: '78.0 MB', ext: 'mp4', url: 'https://vjs.zencdn.net/v/oceans.mp4' },
+      { quality: '720p SD', res: '720p', size: '42.1 MB', ext: 'mp4', url: 'https://media.w3.org/2010/05/bunny/trailer.mp4' },
+      { quality: '480p Low', res: '480p', size: '21.5 MB', ext: 'mp4', url: 'https://media.w3.org/2010/05/sintel/trailer.mp4' },
       { quality: 'MP3 Audio', res: 'MP3', size: '5.1 MB', ext: 'mp3', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' }
     ],
     originalUrl: 'https://youtube.com/shorts/sample_short_video'
